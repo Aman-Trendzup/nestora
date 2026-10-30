@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+:root {
+  --df-primary: #2563eb;
+  --df-primary-hover: #1d4ed8;
+  --df-background: #f8fafc;
+  --df-surface: #ffffff;
+  --df-text: #0f172a;
+  --df-text-secondary: #475569;
+  --df-border: #e2e8f0;
+  --df-radius-md: 0.5rem;
+  --df-radius-lg: 0.75rem;
+  --df-shadow-sm: 0 1px 3px rgb(15 23 42 / 0.08);
+  --df-shadow-md: 0 4px 6px rgb(15 23 42 / 0.08);
+}
+
+@theme inline {
+  --color-primary: var(--df-primary);
+  --color-primary-hover: var(--df-primary-hover);
+  --color-background: var(--df-background);
+  --color-surface: var(--df-surface);
+  --color-text-primary: var(--df-text);
+  --color-text-secondary: var(--df-text-secondary);
+  --color-border: var(--df-border);
+
+  --radius-md: var(--df-radius-md);
+  --radius-lg: var(--df-radius-lg);
+
+  --shadow-sm: var(--df-shadow-sm);
+  --shadow-md: var(--df-shadow-md);
+}
+
