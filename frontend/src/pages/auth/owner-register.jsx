@@ -1,9 +1,17 @@
-
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "../../context/AuthContext";
 import { FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
 
+
 const OwnerRegister = () => {
+  const navigate = useNavigate();
+  const { refreshUser } = useAuth();
+
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverMessage, setServerMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -20,8 +28,7 @@ const OwnerRegister = () => {
   const [errors, setErrors] = useState({});
 
   const inputClass = (field) =>
-    `w-full rounded-lg border bg-background px-4 py-3 text-sm text-text-primary outline-none transition placeholder:text-text-secondary/60 focus:border-primary ${
-      errors[field] ? "border-red-500" : "border-border"
+    `w-full rounded-lg border bg-background px-4 py-3 text-sm text-text-primary outline-none transition placeholder:text-text-secondary/60 focus:border-primary ${errors[field] ? "border-red-500" : "border-border"
     }`;
 
   const handleChange = (e) => {
@@ -85,14 +92,63 @@ const OwnerRegister = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    setServerMessage("");
 
     if (!validateForm()) return;
 
-    // Backend API integration will go here.
-    console.log("Owner registration data:", formData);
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch(
+        `${API_URL}/api/auth/register/owner`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            fullName: formData.fullName.trim(),
+            email: formData.email.trim(),
+            phone: formData.phone.trim(),
+            businessName: formData.workspaceName.trim(),
+            businessCity: formData.city.trim(),
+            password: formData.password,
+            termsAccepted: formData.agreeToTerms,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Owner registration failed."
+        );
+      }
+
+      const registeredUser = await refreshUser();
+
+      if (!registeredUser || registeredUser.role !== "owner") {
+        throw new Error(
+          "Account created, but owner session verification failed. Please log in."
+        );
+      }
+
+      navigate("/");
+    } catch (error) {
+      setServerMessage(
+        error.message || "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
 
   return (
     <main className="min-h-screen bg-background p-2 sm:p-3">
@@ -178,6 +234,15 @@ const OwnerRegister = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+
+              {serverMessage && (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+                >
+                  {serverMessage}
+                </div>
+              )}
 
               {/* PERSONAL DETAILS */}
               <div>
@@ -390,10 +455,11 @@ const OwnerRegister = () => {
               {/* SUBMIT */}
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-primary-hover"
+                disabled={isSubmitting}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Create partner account
-                <FiArrowRight />
+                {isSubmitting ? "Creating account..." : "Create partner account"}
+                {!isSubmitting && <FiArrowRight />}
               </button>
 
               <p className="text-center text-xs leading-5 text-text-secondary">

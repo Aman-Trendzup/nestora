@@ -1,8 +1,10 @@
 
 import { useState } from "react";
 import { Link } from "react-router";
+import { useAuth } from "../../context/AuthContext";
 
 const Register = () => {
+  const { refreshUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -98,10 +100,17 @@ const Register = () => {
         throw new Error(data.message || "Registration failed.");
       }
 
-      setIsSuccess(true);
-      setServerMessage(data.message);
+      // Verify the newly created user's session
+      const registeredUser = await refreshUser();
 
-      console.log("Registered user:", data.user);
+      if (!registeredUser) {
+        throw new Error(
+          "Account created, but session verification failed. Please log in."
+        );
+      }
+
+      setIsSuccess(true);
+      setServerMessage(data.message || "Account created successfully!");
 
     } catch (error) {
       setIsSuccess(false);
@@ -468,18 +477,17 @@ const Register = () => {
 
               </div>
 
-{serverMessage && (
-  <div
-    role="alert"
-    className={`rounded-lg border p-3 text-sm ${
-      isSuccess
-        ? "border-green-200 bg-green-50 text-green-700"
-        : "border-red-200 bg-red-50 text-red-600"
-    }`}
-  >
-    {serverMessage}
-  </div>
-)}
+              {serverMessage && (
+                <div
+                  role="alert"
+                  className={`rounded-lg border p-3 text-sm ${isSuccess
+                      ? "border-green-200 bg-green-50 text-green-700"
+                      : "border-red-200 bg-red-50 text-red-600"
+                    }`}
+                >
+                  {serverMessage}
+                </div>
+              )}
 
               {/* Submit Button */}
 

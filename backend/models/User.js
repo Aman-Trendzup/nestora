@@ -40,6 +40,11 @@ const userSchema = new mongoose.Schema(
             trim: true,
         },
 
+        businessCity: {
+            type: String,
+            trim: true,
+        },
+        
         isActive: {
             type: Boolean,
             default: true,

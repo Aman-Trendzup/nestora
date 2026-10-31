@@ -14,7 +14,7 @@ const PublicRoutes = (
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/workspaces" element={<ExploreSpaces />} />
-      <Route path="/workspace/:slug" element={<WorkspaceDetails />} />
+      <Route path="/workspaces/:slug" element={<WorkspaceDetails />} />
     </Route>
   </>
 );

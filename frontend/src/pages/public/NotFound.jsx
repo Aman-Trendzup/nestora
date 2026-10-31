@@ -52,7 +52,7 @@ const NotFound = () => {
         </div>
 
         {/* Actions */}
-        {/* <div className="mt-9 flex flex-col items-center gap-4 sm:flex-row">
+        <div className="mt-9 flex flex-col items-center gap-4 sm:flex-row">
           <Link
             to="/workspaces"
             className="group inline-flex items-center gap-5 rounded-full bg-primary px-7 py-3.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
@@ -70,17 +70,17 @@ const NotFound = () => {
           >
             Back to Home
           </Link>
-        </div> */}
+        </div>
 
         {/* Bottom note */}
         <p className="mt-12 text-xs tracking-wide text-muted">
           NEED A HAND?{" "}
-          {/* <Link
+          <Link
             to="/contact"
             className="font-semibold text-foreground underline underline-offset-4"
           >
             Contact our team
-          </Link> */}
+          </Link>
         </p>
 
       </section>

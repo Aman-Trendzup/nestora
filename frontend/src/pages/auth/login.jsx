@@ -1,8 +1,11 @@
 
 import { useState } from "react";
-import { Link , useNavigate } from "react-router";
+import { useAuth } from "../../context/AuthContext";
+import { Link, useNavigate } from "react-router";
 
 const Login = () => {
+  const { refreshUser } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -11,11 +14,11 @@ const Login = () => {
   });
 
   const [errors, setErrors] = useState({});
-  
+
   const navigate = useNavigate();
 
-const [loading, setLoading] = useState(false);
-const [serverError, setServerError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,64 +34,67 @@ const [serverError, setServerError] = useState("");
     }));
   };
 
- 
-const handleSubmit = async (e) => {
-  e.preventDefault();
 
-  const newErrors = {};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!formData.email.trim()) {
-    newErrors.email = "Please enter your email address.";
-  }
+    const newErrors = {};
 
-  if (!formData.password) {
-    newErrors.password = "Please enter your password.";
-  }
-
-  if (Object.keys(newErrors).length > 0) {
-    setErrors(newErrors);
-    return;
-  }
-
-  try {
-    setLoading(true);
-    setServerError("");
-
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/auth/login`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          email: formData.email.trim(),
-          password: formData.password,
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Login failed. Please try again.");
+    if (!formData.email.trim()) {
+      newErrors.email = "Please enter your email address.";
     }
 
-    // Store non-sensitive user information for the UI.
-    // The authentication token remains in the HTTP-only cookie.
-    localStorage.setItem("nestoraUser", JSON.stringify(data.user));
+    if (!formData.password) {
+      newErrors.password = "Please enter your password.";
+    }
 
-    navigate("/");
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
-  } catch (error) {
-    setServerError(
-      error.message || "Unable to connect to the server. Please try again."
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+      setServerError("");
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            email: formData.email.trim(),
+            password: formData.password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed. Please try again.");
+      }
+
+      // Refresh the authenticated user from the backend
+      const loggedInUser = await refreshUser();
+
+      if (!loggedInUser) {
+        throw new Error("Unable to verify your session. Please try again.");
+      }
+
+      navigate("/");
+
+    } catch (error) {
+      setServerError(
+        error.message || "Unable to connect to the server. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   return (
@@ -254,9 +260,8 @@ const handleSubmit = async (e) => {
                   onChange={handleChange}
                   placeholder="you@example.com"
                   autoComplete="email"
-                  className={`h-13 w-full rounded-lg border bg-background px-4 text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/60 focus:border-primary focus:ring-2 focus:ring-primary/10 ${
-                    errors.email ? "border-red-500" : "border-border"
-                  }`}
+                  className={`h-13 w-full rounded-lg border bg-background px-4 text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/60 focus:border-primary focus:ring-2 focus:ring-primary/10 ${errors.email ? "border-red-500" : "border-border"
+                    }`}
                 />
 
                 {errors.email && (
@@ -300,9 +305,8 @@ const handleSubmit = async (e) => {
                     onChange={handleChange}
                     placeholder="Enter your password"
                     autoComplete="current-password"
-                    className={`h-13 w-full rounded-lg border bg-background px-4 pr-12 text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/60 focus:border-primary focus:ring-2 focus:ring-primary/10 ${
-                      errors.password ? "border-red-500" : "border-border"
-                    }`}
+                    className={`h-13 w-full rounded-lg border bg-background px-4 pr-12 text-sm text-text-primary outline-none transition-all placeholder:text-text-secondary/60 focus:border-primary focus:ring-2 focus:ring-primary/10 ${errors.password ? "border-red-500" : "border-border"
+                      }`}
                   />
 
                   <button
@@ -355,23 +359,23 @@ const handleSubmit = async (e) => {
               </div>
 
 
-{serverError && (
-  <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-    {serverError}
-  </p>
-)}
+              {serverError && (
+                <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  {serverError}
+                </p>
+              )}
 
 
               {/* Submit */}
 
-<button
-  type="submit"
-  disabled={loading}
-  className="flex h-13 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
->
-  {loading ? "Signing in..." : "Sign in"}
-  {!loading && <span aria-hidden="true">→</span>}
-</button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex h-13 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Signing in..." : "Sign in"}
+                {!loading && <span aria-hidden="true">→</span>}
+              </button>
 
             </form>
 
