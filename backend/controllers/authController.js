@@ -2,62 +2,103 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
-// Generate authentication token
+// ----------------------------------
+// AUTHENTICATION HELPERS
+// ----------------------------------
+
 const generateToken = (user) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is missing from environment variables.");
+  }
+
   return jwt.sign(
     {
       id: user._id,
       role: user.role,
     },
     process.env.JWT_SECRET,
-    {
-      expiresIn: "7d",
-    }
+    { expiresIn: "7d" }
   );
 };
 
-// Customer Registration
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  path: "/",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
+
+const setAuthCookie = (res, token) => {
+  res.cookie("token", token, getCookieOptions());
+};
+
+const sendUserResponse = (user) => ({
+  id: user._id,
+  fullName: user.fullName,
+  email: user.email,
+  phone: user.phone,
+  role: user.role,
+  businessName: user.businessName,
+  businessCity: user.businessCity,
+});
+
+const isValidEmail = (email) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+const isValidPhone = (phone) =>
+  /^[6-9]\d{9}$/.test(phone);
+
+
+// ----------------------------------
+// CUSTOMER REGISTRATION
+// ----------------------------------
+
 export const registerCustomer = async (req, res) => {
   try {
     const { fullName, email, phone, password, termsAccepted } = req.body;
 
-    // 1. Check required fields
-    if (!fullName || !email || !phone || !password) {
+    if (
+      typeof fullName !== "string" ||
+      typeof email !== "string" ||
+      typeof phone !== "string" ||
+      typeof password !== "string" ||
+      !fullName.trim() ||
+      !email.trim() ||
+      !phone.trim() ||
+      !password
+    ) {
       return res.status(400).json({
         success: false,
         message: "All required fields must be provided.",
       });
     }
 
-    // 2. Validate full name
-    if (fullName.trim().length < 2) {
+    const normalizedName = fullName.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = phone.trim();
+
+    if (normalizedName.length < 2) {
       return res.status(400).json({
         success: false,
         message: "Please enter a valid full name.",
       });
     }
 
-    // 3. Validate email
-    const normalizedEmail = email.trim().toLowerCase();
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(normalizedEmail)) {
+    if (!isValidEmail(normalizedEmail)) {
       return res.status(400).json({
         success: false,
         message: "Please enter a valid email address.",
       });
     }
 
-    // 4. Validate Indian phone number
-    if (!/^[6-9]\d{9}$/.test(phone.trim())) {
+    if (!isValidPhone(normalizedPhone)) {
       return res.status(400).json({
         success: false,
         message: "Please enter a valid Indian mobile number.",
       });
     }
 
-    // 5. Validate password
     if (password.length < 8) {
       return res.status(400).json({
         success: false,
@@ -65,7 +106,6 @@ export const registerCustomer = async (req, res) => {
       });
     }
 
-    // 6. Check terms acceptance
     if (termsAccepted !== true) {
       return res.status(400).json({
         success: false,
@@ -73,7 +113,6 @@ export const registerCustomer = async (req, res) => {
       });
     }
 
-    // 7. Check existing email
     const existingUser = await User.findOne({
       email: normalizedEmail,
     });
@@ -85,40 +124,22 @@ export const registerCustomer = async (req, res) => {
       });
     }
 
-    // 8. Create customer
-    // Password will automatically be hashed by User model.
-    // Role is explicitly assigned by the backend.
     const user = await User.create({
-      fullName: fullName.trim(),
+      fullName: normalizedName,
       email: normalizedEmail,
-      phone: phone.trim(),
+      phone: normalizedPhone,
       password,
       role: "customer",
       termsAcceptedAt: new Date(),
     });
 
-    // 9. Generate JWT
     const token = generateToken(user);
+    setAuthCookie(res, token);
 
-    // 10. Set secure HTTP-only cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    // 11. Send successful response
     return res.status(201).json({
       success: true,
       message: "Your NESTORA account has been created successfully.",
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      },
+      user: sendUserResponse(user),
     });
 
   } catch (error) {
@@ -138,7 +159,11 @@ export const registerCustomer = async (req, res) => {
   }
 };
 
-// Owner Registration
+
+// ----------------------------------
+// OWNER REGISTRATION
+// ----------------------------------
+
 export const registerOwner = async (req, res) => {
   try {
     const {
@@ -151,13 +176,18 @@ export const registerOwner = async (req, res) => {
       termsAccepted,
     } = req.body;
 
-    // 1. Check required fields
     if (
-      !fullName ||
-      !email ||
-      !phone ||
-      !businessName ||
-      !businessCity ||
+      typeof fullName !== "string" ||
+      typeof email !== "string" ||
+      typeof phone !== "string" ||
+      typeof businessName !== "string" ||
+      typeof businessCity !== "string" ||
+      typeof password !== "string" ||
+      !fullName.trim() ||
+      !email.trim() ||
+      !phone.trim() ||
+      !businessName.trim() ||
+      !businessCity.trim() ||
       !password
     ) {
       return res.status(400).json({
@@ -166,42 +196,33 @@ export const registerOwner = async (req, res) => {
       });
     }
 
-    // 2. Validate full name
-    if (fullName.trim().length < 2) {
-      return res.status(400).json({
-        success: false,
-        message: "Please enter a valid full name.",
-      });
-    }
-
-    // 3. Validate business name
-    if (businessName.trim().length < 2) {
-      return res.status(400).json({
-        success: false,
-        message: "Please enter a valid business name.",
-      });
-    }
-
-    // 4. Validate email
+    const normalizedName = fullName.trim();
     const normalizedEmail = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const normalizedPhone = phone.trim();
+    const normalizedBusinessName = businessName.trim();
+    const normalizedBusinessCity = businessCity.trim();
 
-    if (!emailRegex.test(normalizedEmail)) {
+    if (normalizedName.length < 2 || normalizedBusinessName.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter valid name and business details.",
+      });
+    }
+
+    if (!isValidEmail(normalizedEmail)) {
       return res.status(400).json({
         success: false,
         message: "Please enter a valid email address.",
       });
     }
 
-    // 5. Validate Indian phone number
-    if (!/^[6-9]\d{9}$/.test(phone.trim())) {
+    if (!isValidPhone(normalizedPhone)) {
       return res.status(400).json({
         success: false,
         message: "Please enter a valid Indian mobile number.",
       });
     }
 
-    // 6. Validate password
     if (password.length < 8) {
       return res.status(400).json({
         success: false,
@@ -209,7 +230,6 @@ export const registerOwner = async (req, res) => {
       });
     }
 
-    // 7. Check terms acceptance
     if (termsAccepted !== true) {
       return res.status(400).json({
         success: false,
@@ -217,7 +237,6 @@ export const registerOwner = async (req, res) => {
       });
     }
 
-    // 8. Check whether email already exists
     const existingUser = await User.findOne({
       email: normalizedEmail,
     });
@@ -229,43 +248,26 @@ export const registerOwner = async (req, res) => {
       });
     }
 
-    // 9. Create owner
     const user = await User.create({
-      fullName: fullName.trim(),
+      fullName: normalizedName,
       email: normalizedEmail,
-      phone: phone.trim(),
-      businessName: businessName.trim(),
-      businessCity: businessCity.trim(),
+      phone: normalizedPhone,
+      businessName: normalizedBusinessName,
+      businessCity: normalizedBusinessCity,
       password,
       role: "owner",
       termsAcceptedAt: new Date(),
     });
 
-    // 10. Generate authentication token
     const token = generateToken(user);
+    setAuthCookie(res, token);
 
-    // 11. Set HTTP-only cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    // 12. Return successful response
     return res.status(201).json({
       success: true,
       message: "Your NESTORA owner account has been created successfully.",
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        businessName: user.businessName,
-        businessCity: user.businessCity,
-        role: user.role,
-      },
+      user: sendUserResponse(user),
     });
+
   } catch (error) {
     console.error("Owner Registration Error:", error);
 
@@ -283,23 +285,36 @@ export const registerOwner = async (req, res) => {
   }
 };
 
-// Customer Login
-export const loginCustomer = async (req, res) => {
+
+// ----------------------------------
+// CUSTOMER / OWNER LOGIN
+// ----------------------------------
+
+export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Validate required fields
-    if (!email || !password) {
+    if (
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !email.trim() ||
+      !password
+    ) {
       return res.status(400).json({
         success: false,
         message: "Email and password are required.",
       });
     }
 
-    // 2. Normalize email
     const normalizedEmail = email.trim().toLowerCase();
 
-    // 3. Find user and explicitly retrieve password
+    if (!isValidEmail(normalizedEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address.",
+      });
+    }
+
     const user = await User.findOne({
       email: normalizedEmail,
     }).select("+password");
@@ -311,7 +326,6 @@ export const loginCustomer = async (req, res) => {
       });
     }
 
-    // 4. Check account status
     if (!user.isActive) {
       return res.status(403).json({
         success: false,
@@ -319,7 +333,6 @@ export const loginCustomer = async (req, res) => {
       });
     }
 
-    // 5. Compare password
     const isPasswordValid = await user.comparePassword(password);
 
     if (!isPasswordValid) {
@@ -329,32 +342,17 @@ export const loginCustomer = async (req, res) => {
       });
     }
 
-    // 6. Generate authentication token
     const token = generateToken(user);
+    setAuthCookie(res, token);
 
-    // 7. Set HTTP-only authentication cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    // 8. Send successful response
     return res.status(200).json({
       success: true,
       message: "Welcome back to NESTORA!",
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      },
+      user: sendUserResponse(user),
     });
 
   } catch (error) {
-    console.error("Customer Login Error:", error);
+    console.error("Login Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -363,21 +361,18 @@ export const loginCustomer = async (req, res) => {
   }
 };
 
-// Get currently authenticated user
+
+// ----------------------------------
+// GET CURRENT AUTHENTICATED USER
+// ----------------------------------
+
 export const getCurrentUser = async (req, res) => {
   try {
     return res.status(200).json({
       success: true,
-      user: {
-        id: req.user._id,
-        fullName: req.user.fullName,
-        email: req.user.email,
-        businessName: req.user.businessName,
-        businessCity: req.user.businessCity,
-        phone: req.user.phone,
-        role: req.user.role,
-      },
+      user: sendUserResponse(req.user),
     });
+
   } catch (error) {
     console.error("Get Current User Error:", error);
 
@@ -388,12 +383,17 @@ export const getCurrentUser = async (req, res) => {
   }
 };
 
-// Customer Logout
-export const logoutCustomer = (req, res) => {
+
+// ----------------------------------
+// LOGOUT
+// ----------------------------------
+
+export const logoutUser = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
   });
 
   return res.status(200).json({

@@ -4,29 +4,28 @@ import express from "express";
 import {
   registerCustomer,
   registerOwner,
-  loginCustomer,
+  loginUser,
   getCurrentUser,
-  logoutCustomer,
+  logoutUser,
 } from "../controllers/authController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
-
 
 const router = express.Router();
 
 // Customer registration
 router.post("/register", registerCustomer);
 
-// Owner registration
+// Workspace owner registration
 router.post("/register/owner", registerOwner);
 
-// Customer login
-router.post("/login", loginCustomer);
+// Customer and owner login
+router.post("/login", loginUser);
 
-// Get logged-in user
+// Get authenticated user
 router.get("/me", protect, getCurrentUser);
 
-// Customer logout
-router.post("/logout", logoutCustomer);
+// Logout
+router.post("/logout", logoutUser);
 
 export default router;

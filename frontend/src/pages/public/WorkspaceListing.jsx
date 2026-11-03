@@ -1,103 +1,14 @@
-
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
 /* ----------------------------------
-   SAMPLE WORKSPACE DATA
+   API CONFIGURATION
 ---------------------------------- */
 
-const workspaces = [
-  {
-    id: 1,
-    name: "The Executive Workspace",
-    slug: "the-executive-workspace",
-    location: "Gurugram",
-    area: "Cyber City",
-    type: "coworking",
-    typeLabel: "Coworking Space",
-    price: 499,
-    priceUnit: "hour",
-    capacity: 1,
-    image:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=85",
-    amenities: ["Wi-Fi", "Coffee", "Power Backup"],
-  },
-  {
-    id: 2,
-    name: "The Private Suite",
-    slug: "the-private-suite",
-    location: "Gurugram",
-    area: "Golf Course Road",
-    type: "private-office",
-    typeLabel: "Private Office",
-    price: 1499,
-    priceUnit: "hour",
-    capacity: 6,
-    image:
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1000&q=85",
-    amenities: ["Wi-Fi", "Meeting Table", "AC"],
-  },
-  {
-    id: 3,
-    name: "The Meeting Studio",
-    slug: "the-meeting-studio",
-    location: "Delhi",
-    area: "Connaught Place",
-    type: "meeting-room",
-    typeLabel: "Meeting Room",
-    price: 899,
-    priceUnit: "hour",
-    capacity: 8,
-    image:
-      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1000&q=85",
-    amenities: ["Wi-Fi", "Display Screen", "Whiteboard"],
-  },
-  {
-    id: 4,
-    name: "The Dedicated Desk",
-    slug: "the-dedicated-desk",
-    location: "Noida",
-    area: "Sector 62",
-    type: "dedicated-desk",
-    typeLabel: "Dedicated Desk",
-    price: 299,
-    priceUnit: "hour",
-    capacity: 1,
-    image:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=85",
-    amenities: ["Wi-Fi", "Power Backup", "Coffee"],
-  },
-  {
-    id: 5,
-    name: "The Collaboration Room",
-    slug: "the-collaboration-room",
-    location: "Bengaluru",
-    area: "Indiranagar",
-    type: "meeting-room",
-    typeLabel: "Meeting Room",
-    price: 1199,
-    priceUnit: "hour",
-    capacity: 10,
-    image:
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1000&q=85",
-    amenities: ["Wi-Fi", "Display Screen", "Video Conferencing"],
-  },
-  {
-    id: 6,
-    name: "The Team Office",
-    slug: "the-team-office",
-    location: "Mumbai",
-    area: "Andheri East",
-    type: "private-office",
-    typeLabel: "Private Office",
-    price: 1999,
-    priceUnit: "hour",
-    capacity: 8,
-    image:
-      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1000&q=85",
-    amenities: ["Wi-Fi", "AC", "Reception"],
-  },
-];
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const WORKSPACE_API = `${API_BASE_URL}/api/workspaces/search`;
 
 /* ----------------------------------
    FILTER OPTIONS
@@ -157,7 +68,65 @@ function formatDate(date) {
 }
 
 function formatPrice(price) {
-  return `₹${Number(price).toLocaleString("en-IN")}`;
+  return `₹${Number(price || 0).toLocaleString("en-IN")}`;
+}
+
+function getTypeLabel(type) {
+  return (
+    typeOptions.find((option) => option.value === type)?.label.replace(
+      /s$/,
+      ""
+    ) || type || "Workspace"
+  );
+}
+
+/* ----------------------------------
+   NORMALIZE BACKEND DATA
+---------------------------------- */
+
+function normalizeWorkspace(workspace) {
+  const address = workspace.address || {};
+  const pricing = workspace.pricing || {};
+
+  const firstImage = workspace.images?.[0];
+
+  return {
+    id: workspace._id || workspace.id,
+    name: workspace.name || "Untitled Workspace",
+    slug: workspace.slug,
+
+    location:
+      address.city ||
+      workspace.location ||
+      "",
+
+    area:
+      address.area ||
+      workspace.area ||
+      "",
+
+    type: workspace.type || "",
+
+    typeLabel: getTypeLabel(workspace.type),
+
+    price:
+      Number(pricing.hourly ?? workspace.price ?? 0),
+
+    priceUnit: "hour",
+
+    capacity: Number(workspace.capacity || 0),
+
+    image:
+      typeof firstImage === "string"
+        ? firstImage
+        : firstImage?.url ||
+          workspace.image ||
+          "",
+
+    amenities: Array.isArray(workspace.amenities)
+      ? workspace.amenities
+      : [],
+  };
 }
 
 /* ----------------------------------
@@ -186,7 +155,15 @@ export default function WorkspaceListing() {
   const [sortBy, setSortBy] = useState("recommended");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  /* Read URL parameters */
+  // Backend data states
+  const [workspaces, setWorkspaces] = useState([]);
+  const [totalWorkspaces, setTotalWorkspaces] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  /* ----------------------------------
+     READ URL PARAMETERS
+  ---------------------------------- */
 
   const location = searchParams.get("location") || "";
 
@@ -210,7 +187,9 @@ export default function WorkspaceListing() {
     .split(",")
     .filter(Boolean);
 
-  /* Update URL filters */
+  /* ----------------------------------
+     UPDATE URL FILTERS
+  ---------------------------------- */
 
   function updateFilter(key, value) {
     const nextParams = new URLSearchParams(searchParams);
@@ -224,7 +203,9 @@ export default function WorkspaceListing() {
     setSearchParams(nextParams);
   }
 
-  /* Toggle amenities */
+  /* ----------------------------------
+     TOGGLE AMENITIES
+  ---------------------------------- */
 
   function toggleAmenity(amenity) {
     const nextAmenities = selectedAmenities.includes(amenity)
@@ -234,14 +215,18 @@ export default function WorkspaceListing() {
     updateFilter("amenities", nextAmenities.join(","));
   }
 
-  /* Clear filters */
+  /* ----------------------------------
+     CLEAR FILTERS
+  ---------------------------------- */
 
   function clearFilters() {
     setSearchParams({});
     setSortBy("recommended");
   }
 
-  /* Check active filters */
+  /* ----------------------------------
+     CHECK ACTIVE FILTERS
+  ---------------------------------- */
 
   const hasFilters = Boolean(
     location ||
@@ -267,64 +252,155 @@ export default function WorkspaceListing() {
     ...selectedAmenities,
   ].filter(Boolean).length;
 
-  /* Apply filters */
+  /* ----------------------------------
+     FETCH WORKSPACES FROM BACKEND
+  ---------------------------------- */
 
-  const filteredWorkspaces = useMemo(() => {
-    let results = workspaces.filter((workspace) => {
-      const searchLocation = location.trim().toLowerCase();
+  useEffect(() => {
+    const controller = new AbortController();
 
-      const matchesLocation =
-        !searchLocation ||
-        workspace.location.toLowerCase().includes(searchLocation) ||
-        workspace.area.toLowerCase().includes(searchLocation);
+    async function fetchWorkspaces() {
+      try {
+        setLoading(true);
+        setError("");
 
-      const matchesType = !type || workspace.type === type;
+        const params = new URLSearchParams();
 
-      const guestCount = Number(guests || 0);
+        // Location filter
+        if (location.trim()) {
+          params.set("location", location.trim());
+        }
 
-      const matchesGuests =
-        !guestCount || workspace.capacity >= guestCount;
+        // Workspace type filter
+        if (type) {
+          params.set("type", type);
+        }
 
-      const matchesMinPrice =
-        !minPrice || workspace.price >= Number(minPrice);
+        // Capacity filter
+        if (guests) {
+          params.set("guests", guests);
+        }
 
-      const matchesMaxPrice =
-        !maxPrice || workspace.price <= Number(maxPrice);
+        // Amenities filter
+        if (selectedAmenities.length > 0) {
+          params.set("amenities", selectedAmenities.join(","));
+        }
 
-      const matchesAmenities = selectedAmenities.every((amenity) =>
-        workspace.amenities.includes(amenity)
-      );
+        // Backend sorting
+        params.set("sort", sortBy);
 
-      return (
-        matchesLocation &&
-        matchesType &&
-        matchesGuests &&
-        matchesMinPrice &&
-        matchesMaxPrice &&
-        matchesAmenities
-      );
-    });
+        // Pagination defaults
+        params.set("page", "1");
+        params.set("limit", "12");
 
-    /* Sorting */
+        const response = await fetch(
+          `${WORKSPACE_API}?${params.toString()}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            signal: controller.signal,
+          }
+        );
 
-    if (sortBy === "price-low") {
-      results = [...results].sort((a, b) => a.price - b.price);
+        if (!response.ok) {
+          throw new Error(
+            `Unable to fetch workspaces. Server returned ${response.status}.`
+          );
+        }
+
+        const data = await response.json();
+
+        // Supports the controller response:
+        // { success: true, count: 5, workspaces: [...] }
+
+        const workspaceData =
+          data.workspaces ||
+          data.data?.workspaces ||
+          [];
+
+        if (!Array.isArray(workspaceData)) {
+          throw new Error("Invalid workspace data received from server.");
+        }
+
+        const normalizedWorkspaces =
+          workspaceData.map(normalizeWorkspace);
+
+        setWorkspaces(normalizedWorkspaces);
+
+        setTotalWorkspaces(
+          data.total ??
+            data.count ??
+            data.totalWorkspaces ??
+            normalizedWorkspaces.length
+        );
+      } catch (err) {
+        if (err.name === "AbortError") return;
+
+        console.error("Workspace fetch error:", err);
+
+        setError(
+          err.message ||
+            "Something went wrong while loading workspaces."
+        );
+
+        setWorkspaces([]);
+        setTotalWorkspaces(0);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
     }
 
-    if (sortBy === "price-high") {
-      results = [...results].sort((a, b) => b.price - a.price);
-    }
+    fetchWorkspaces();
 
-    return results;
+    return () => controller.abort();
   }, [
     location,
     type,
     guests,
-    minPrice,
-    maxPrice,
-    selectedAmenities,
+    selectedAmenities.join(","),
     sortBy,
   ]);
+
+  /* ----------------------------------
+     LOCAL PRICE FILTER + SORTING
+
+     Price filters are retained for
+     existing URL-based functionality.
+  ---------------------------------- */
+
+  const filteredWorkspaces = useMemo(() => {
+    let results = [...workspaces];
+
+    if (minPrice) {
+      results = results.filter(
+        (workspace) => workspace.price >= Number(minPrice)
+      );
+    }
+
+    if (maxPrice) {
+      results = results.filter(
+        (workspace) => workspace.price <= Number(maxPrice)
+      );
+    }
+
+    // Keep sorting functional on the frontend too.
+    // This also keeps the UI working if backend sorting
+    // has not been updated yet.
+
+    if (sortBy === "price-low") {
+      results.sort((a, b) => a.price - b.price);
+    }
+
+    if (sortBy === "price-high") {
+      results.sort((a, b) => b.price - a.price);
+    }
+
+    return results;
+  }, [workspaces, minPrice, maxPrice, sortBy]);
 
   /* ----------------------------------
      DESKTOP FILTER CONTENT
@@ -353,11 +429,12 @@ export default function WorkspaceListing() {
         </div>
       </FilterSection>
 
-
       <FilterSection title="Minimum capacity">
         <select
           value={guests}
-          onChange={(event) => updateFilter("guests", event.target.value)}
+          onChange={(event) =>
+            updateFilter("guests", event.target.value)
+          }
           className="w-full rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary"
         >
           <option value="">Any capacity</option>
@@ -419,7 +496,7 @@ export default function WorkspaceListing() {
 
             <p className="text-sm text-text-secondary">
               <span className="font-semibold text-text-primary">
-                {filteredWorkspaces.length}
+                {loading ? "..." : filteredWorkspaces.length}
               </span>{" "}
               workspaces found
             </p>
@@ -494,7 +571,9 @@ export default function WorkspaceListing() {
                 type="date"
                 min={today}
                 value={date}
-                onChange={(event) => updateFilter("date", event.target.value)}
+                onChange={(event) =>
+                  updateFilter("date", event.target.value)
+                }
                 className="w-full rounded-md border border-border bg-surface px-3 py-3 text-sm text-text-primary outline-none focus:border-primary"
               />
             </div>
@@ -514,7 +593,9 @@ export default function WorkspaceListing() {
                 type="time"
                 value={time}
                 disabled={duration === "full-day"}
-                onChange={(event) => updateFilter("time", event.target.value)}
+                onChange={(event) =>
+                  updateFilter("time", event.target.value)
+                }
                 className="w-full rounded-md border border-border bg-surface px-3 py-3 text-sm text-text-primary outline-none focus:border-primary disabled:cursor-not-allowed disabled:bg-background disabled:text-text-secondary"
               />
             </div>
@@ -720,8 +801,8 @@ export default function WorkspaceListing() {
                 </h2>
 
                 <p className="mt-1 text-sm text-text-secondary">
-                  Showing {filteredWorkspaces.length} of {workspaces.length}{" "}
-                  workspaces
+                  Showing {loading ? "..." : filteredWorkspaces.length} of{" "}
+                  {totalWorkspaces} workspaces
                 </p>
               </div>
 
@@ -867,9 +948,39 @@ export default function WorkspaceListing() {
               </div>
             )}
 
-            {/* WORKSPACE CARDS */}
+            {/* LOADING STATE */}
 
-            {filteredWorkspaces.length > 0 ? (
+            {loading ? (
+              <div className="rounded-xl border border-border bg-surface px-5 py-16 text-center">
+                <div className="mx-auto size-8 animate-spin rounded-full border-4 border-border border-t-primary" />
+
+                <p className="mt-4 text-sm text-text-secondary">
+                  Finding workspaces for you...
+                </p>
+              </div>
+            ) : error ? (
+              /* ERROR STATE */
+
+              <div className="rounded-xl border border-border bg-surface px-5 py-16 text-center">
+                <h3 className="text-lg font-semibold text-text-primary">
+                  Unable to load workspaces
+                </h3>
+
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-text-secondary">
+                  {error}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-6 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : filteredWorkspaces.length > 0 ? (
+              /* WORKSPACE CARDS */
+
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-2">
                 {filteredWorkspaces.map((workspace) => (
                   <article
@@ -882,12 +993,18 @@ export default function WorkspaceListing() {
                       aria-label={`View ${workspace.name}`}
                     >
                       <div className="relative aspect-[16/10] overflow-hidden bg-background">
-                        <img
-                          src={workspace.image}
-                          alt={workspace.name}
-                          loading="lazy"
-                          className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
+                        {workspace.image ? (
+                          <img
+                            src={workspace.image}
+                            alt={workspace.name}
+                            loading="lazy"
+                            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex size-full items-center justify-center text-sm text-text-secondary">
+                            Image unavailable
+                          </div>
+                        )}
 
                         <span className="absolute left-3 top-3 rounded-md bg-surface px-3 py-1.5 text-xs font-semibold text-text-primary shadow-sm">
                           {workspace.typeLabel}
