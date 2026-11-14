@@ -1,159 +1,148 @@
+import { useState } from "react";
+import { Link } from "react-router";
+
 const steps = [
   {
-    number: "01",
-    title: "Find your space",
+    step: 1,
+    title: "Discover & Filter Spaces",
     description:
-      "Explore workspaces for every kind of workday, from focused solo sessions to team meetups.",
+      "Search coworking desks, private team offices, and meeting suites across prime commercial hubs by location, date, time, and budget.",
   },
   {
-    number: "02",
-    title: "Choose your schedule",
+    step: 2,
+    title: "Pick Schedule & Budget",
     description:
-      "Select the date and time that suit your plans. Your workspace, on your schedule.",
+      "Select exact hourly booking windows or full-day passes on demand. Enjoy transparent rates with zero security deposits or long-term lease lock-ins.",
   },
   {
-    number: "03",
-    title: "Check & reserve",
+    step: 3,
+    title: "Instant Lock & Confirmation",
     description:
-      "Check availability and review the details before reserving the space that feels right.",
+      "Real-time calendar verification with atomic slot locking prevents double bookings and instantly generates your verified digital reference code.",
   },
   {
-    number: "04",
-    title: "You're all set",
+    step: 4,
+    title: "Check In & Pay Offline at Venue",
     description:
-      "Receive your booking confirmation and keep your reservation details close at hand.",
+      "Arrive at the workspace, present your reference code at reception, and settle payment conveniently offline via UPI, card, or cash upon check-in.",
   },
 ];
 
-function ArrowIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
-      aria-hidden="true"
-    >
-      <path
-        d="M5 12h14m-6-6 6 6-6 6"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export default function HowItWorks() {
+  // Steps 1 & 2 active by default, exactly mirroring the reference image
+  const [activeSteps, setActiveSteps] = useState([1, 2]);
+
+  const toggleStep = (stepNumber) => {
+    setActiveSteps((prev) =>
+      prev.includes(stepNumber)
+        ? prev.filter((s) => s !== stepNumber)
+        : [...prev, stepNumber]
+    );
+  };
+
   return (
-    <section
-      id="how-it-works"
-      className="overflow-hidden px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24"
-    >
-      <div className="mx-auto max-w-7xl">
-        {/* Section heading */}
-        <div className="mb-12 text-center sm:mb-16">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-text-secondary">
-            A simpler way to work
-          </p>
+    <section id="how-it-works" className="bg-white py-16 sm:py-20 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16 items-start">
 
-          <h2 className="text-3xl font-medium tracking-tight text-text-primary sm:text-4xl lg:text-[42px]">
-            How It Works
-          </h2>
-        </div>
+          {/* =========================================================
+              LEFT COLUMN: Editorial Narrative & "Ready to start?" Card
+             ========================================================= */}
+          <div className="space-y-8">
 
-        {/* Timeline and feature panel */}
-        <div className="grid items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-8">
-          {/* Booking steps */}
-          <div className="relative">
-            <div
-              aria-hidden="true"
-              className="absolute bottom-10 left-[35px] top-10 border-l border-dashed border-primary/25 sm:left-[43px]"
-            />
+            {/* Main Editorial Headline */}
+            <div className="space-y-3">
+              <h2 className="font-serif text-4xl sm:text-5xl lg:text-[54px] font-normal leading-[1.08] tracking-tight text-slate-900">
+                Simple Steps to <br />
+                <span className="italic">Reserve Your Space</span>
+              </h2>
 
-            <div className="space-y-8 sm:space-y-9">
-              {steps.map((step) => (
-                <div
-                  key={step.number}
-                  className="relative grid grid-cols-[58px_minmax(0,1fr)] gap-4 sm:grid-cols-[74px_minmax(0,1fr)] sm:gap-4"
-                >
-                  {/* Step number */}
-                  <div className="relative z-10 flex items-start justify-center">
-                    <span className="text-[38px] font-semibold leading-none tracking-[-0.07em] text-text-secondary/[0.78] sm:text-[48px]">
-                      {step.number}
-                    </span>
-                  </div>
-
-                  {/* Step content */}
-                  <div className="pt-0.5">
-                    <h3 className="text-xl font-medium tracking-tight text-text-primary sm:text-[23px]">
-                      {step.title}
-                    </h3>
-
-                    <p className="mt-2 max-w-sm text-sm leading-6 text-text-secondary sm:text-[14px] sm:leading-[1.8]">
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
+                It all starts with a single search.
+              </p>
             </div>
+
+            {/* Narrative Paragraph */}
+            <p className="text-sm leading-relaxed text-slate-600 sm:text-base sm:leading-7 max-w-lg">
+              Nestora eliminates rigid multi-month leases, hefty lock-in deposits,
+              and opaque venue pricing. Whether you're an independent professional
+              seeking quiet focus or a distributed team booking a client meeting
+              suite, our platform connects you with admin-vetted workspaces in
+              minutes.
+            </p>
+
           </div>
 
-          {/* Feature panel */}
-
-          <div className="relative min-h-[300px] overflow-hidden rounded-[32px] bg-primary sm:min-h-[360px] lg:min-h-[470px] lg:rounded-l-[80px] lg:rounded-r-none">
-
-            {/* Background image */}
-            <img
-              src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=90"
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-
-            {/* Dark overlay for text readability */}
+          {/* =========================================================
+              RIGHT COLUMN: Stepper Timeline with Speech-Bubble Notches
+             ========================================================= */}
+          <div className="relative pt-2">
+            {/* Vertical Connecting Timeline Line */}
             <div
               aria-hidden="true"
-              className="absolute inset-0 bg-black/65"
+              className="absolute left-[19px] sm:left-[23px] top-6 bottom-10 w-[2px] bg-slate-200"
             />
 
-            {/* Extra gradient behind the content */}
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/20"
-            />
+            <div className="space-y-6 sm:space-y-8">
+              {steps.map((item) => {
+                const isHighlight = activeSteps.includes(item.step);
 
-            {/* Subtle decorative geometry */}
-            <div
-              aria-hidden="true"
-              className="absolute -right-20 -top-20 h-72 w-72 rotate-12 rounded-[56px] border border-white/20 sm:h-96 sm:w-96"
-            />
+                return (
+                  <div
+                    key={item.step}
+                    className="relative flex items-start gap-4 sm:gap-6 group"
+                  >
+                    {/* Circle Step Number */}
+                    <button
+                      type="button"
+                      onClick={() => toggleStep(item.step)}
+                      aria-label={`Toggle step ${item.step}`}
+                      className={`relative z-10 flex size-10 sm:size-12 shrink-0 items-center justify-center rounded-full font-bold text-sm sm:text-base transition-all duration-300 ${isHighlight
+                        ? "bg-primary text-white shadow-xs scale-105"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                    >
+                      {item.step}
+                    </button>
 
-            <div
-              aria-hidden="true"
-              className="absolute -bottom-32 -left-16 h-72 w-72 rotate-[-24deg] rounded-[64px] bg-white/[0.06] sm:h-96 sm:w-96"
-            />
+                    {/* Step Content Container */}
+                    <div className="flex-1 min-w-0">
+                      {isHighlight ? (
+                        /* Highlighted Green Card with Left Triangle Notch (from reference) */
+                        <div className="relative rounded-2xl bg-primary p-5 sm:p-6 text-white shadow-xs transition-all duration-300">
+                          {/* Triangle pointer notch pointing back at the circle */}
+                          <div
+                            aria-hidden="true"
+                            className="absolute -left-2 top-4 sm:top-5 size-0 border-y-[8px] border-y-transparent border-r-[8px] border-r-primary"
+                          />
 
-            {/* Panel content */}
-            <div className="relative z-10 flex min-h-[300px] flex-col items-center justify-center px-6 py-12 text-center text-white sm:min-h-[360px] sm:px-10 lg:min-h-[470px]">
+                          <h4 className="text-base sm:text-lg font-bold leading-snug tracking-tight text-white">
+                            {item.title}
+                          </h4>
 
-              <span className="mb-5 inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.2em] text-white/85">
-                <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                Your next workday starts here
-              </span>
+                          <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-white/90">
+                            {item.description}
+                          </p>
+                        </div>
+                      ) : (
+                        /* Standard Upcoming Step (from reference) */
+                        <div
+                          onClick={() => toggleStep(item.step)}
+                          className="pt-1.5 sm:pt-2 cursor-pointer rounded-xl p-2 -ml-2 transition-colors hover:bg-slate-50"
+                        >
+                          <h4 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                            {item.title}
+                          </h4>
 
-              <h3 className="max-w-md text-3xl font-medium leading-tight tracking-tight sm:text-4xl lg:text-[42px]">
-                The right space.
-                <span className="mt-1 block font-normal italic">
-                  Just a few steps away.
-                </span>
-              </h3>
-
-              <p className="mt-5 max-w-sm text-sm leading-7 text-white/85">
-                Less time figuring things out. More time doing your best work.
-                Find a space that fits your day.
-              </p>
-
+                          <p className="mt-1 text-xs sm:text-sm leading-relaxed text-slate-500">
+                            {item.description}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

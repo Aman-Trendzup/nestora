@@ -1,8 +1,6 @@
 
 import { useState } from "react";
-
-const heroImage =
-  "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=2000&q=85";
+import heroImage from "../../assets/images/home/hero.avif"
 
 export default function Hero() {
   const [location, setLocation] = useState("");
@@ -14,7 +12,7 @@ export default function Hero() {
 
   const workspaceTypes = [
     "Any workspace",
-    "Coworking Desk",
+    "Coworking Space",
     "Private Office",
     "Meeting Room",
     "Conference Room",
@@ -32,7 +30,7 @@ export default function Hero() {
       guests,
     });
 
-window.location.href = `/workspaces?${params.toString()}`;
+    window.location.href = `/workspaces?${params.toString()}`;
   }
 
   return (
@@ -58,19 +56,13 @@ window.location.href = `/workspaces?${params.toString()}`;
             that works for you.
           </p>
 
-          <a
-            href="#workspace-search"
-            className="mt-7 inline-flex h-12 items-center justify-center bg-text-primary px-6 text-sm font-medium text-surface transition-colors hover:bg-primary"
-          >
-            Explore Workspaces
-          </a>
         </div>
       </div>
 
       {/* Floating search panel */}
       <div
         id="workspace-search"
-        className="relative z-20 mx-auto -mt-12 max-w-6xl rounded-lg border border-border bg-surface p-4 shadow-md sm:p-6"
+        className="relative z-20 mx-auto -mt-20 max-w-6xl rounded-lg border border-border bg-surface p-4 shadow-md sm:p-6"
       >
         <form onSubmit={handleSearch}>
           {/* Workspace type tabs */}
@@ -81,8 +73,8 @@ window.location.href = `/workspaces?${params.toString()}`;
                 type="button"
                 onClick={() => setWorkspaceType(type)}
                 className={`border-b-2 px-3 py-3 text-sm transition-colors ${workspaceType === type
-                    ? "border-primary font-semibold text-text-primary"
-                    : "border-transparent text-text-secondary hover:text-text-primary"
+                  ? "border-primary font-semibold text-text-primary"
+                  : "border-transparent text-text-secondary hover:text-text-primary"
                   }`}
               >
                 {type}
@@ -91,7 +83,7 @@ window.location.href = `/workspaces?${params.toString()}`;
           </div>
 
           {/* Search fields and button in one row */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
             {/* Location */}
             <label className="flex min-w-0 flex-col gap-2 border-b border-border pb-3 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
               <span className="text-sm font-semibold text-text-primary">
@@ -198,6 +190,6 @@ window.location.href = `/workspaces?${params.toString()}`;
           </div>
         </form>
       </div>
-    </section>
+    </section >
   );
 }

@@ -1,54 +1,45 @@
+import { Link } from "react-router";
+import gurugram from "../../assets/images/home/locations/gurugram.webp"
+import delhi from "../../assets/images/home/locations/delhi.webp"
+import bengaluru from "../../assets/images/home/locations/bengaluru.webp"
+import hyderabad from "../../assets/images/home/locations/hyderabad.webp"
+import mumbai from "../../assets/images/home/locations/mumbai.webp"
+import noida from "../../assets/images/home/locations/noida.webp"
+
 
 const locations = [
   {
     name: "Gurugram",
-    subtitle: "Business, without the commute.",
-    image:
-      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=85",
-    alt: "Modern commercial buildings",
-    href: "/workspaces?location=Gurugram",
+    image: gurugram,
+    alt: "Modern commercial buildings in Gurugram",
   },
   {
     name: "Delhi",
-    subtitle: "Find your place in the capital.",
-    image:
-      "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=85",
-    alt: "City skyline at dusk",
-    href: "/workspaces?location=Delhi",
+    image: delhi,
+    alt: "City skyline of Delhi",
   },
   {
     name: "Noida",
-    subtitle: "Make room for your next idea.",
-    image:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=85",
-    alt: "Contemporary workspace",
-    href: "/workspaces?location=Noida",
+    image: noida,
+    alt: "Contemporary workspace in Noida",
   },
   {
     name: "Bengaluru",
-    subtitle: "A better space to build what's next.",
-    image:
-      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=900&q=85",
-    alt: "Bright modern office",
-    href: "/workspaces?location=Bengaluru",
+    image: bengaluru,
+    alt: "Bright modern office in Bengaluru",
   },
   {
     name: "Mumbai",
-    subtitle: "Find focus in the city that moves.",
-    image:
-      "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=900&q=85",
-    alt: "City buildings and skyline",
-    href: "/workspaces?location=Mumbai",
+    image: mumbai,
+    alt: "City buildings in Mumbai",
   },
   {
     name: "Hyderabad",
-    subtitle: "Space to think bigger.",
-    image:
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=900&q=85",
-    alt: "Modern professional workspace",
-    href: "/workspaces?location=Hyderabad",
+    image: hyderabad,
+    alt: "Modern professional workspace in Hyderabad",
   },
 ];
+
 export default function PopularLocations() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
@@ -69,51 +60,41 @@ export default function PopularLocations() {
           </p>
         </div>
 
-        <a
-          href="/workspaces"
+        <Link
+          to="/workspaces"
           className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-text-primary transition-colors hover:text-primary"
         >
           Explore all spaces
           <span aria-hidden="true">→</span>
-        </a>
+        </Link>
       </div>
 
       {/* Location cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-6 sm:gap-6">
         {locations.map((location) => (
-          <a
+          <Link
             key={location.name}
-            href={location.href}
-            className="group relative isolate flex min-h-56 overflow-hidden rounded-lg bg-surface sm:min-h-64"
+            to={`/workspaces?location=${encodeURIComponent(location.name)}`}
+            className="group relative isolate h-56 sm:h-64 lg:h-72 overflow-hidden rounded-2xl bg-slate-900 block shadow-xs transition-all duration-300 hover:shadow-md"
           >
+            {/* Background image */}
             <img
               src={location.image}
               alt={location.alt}
               loading="lazy"
-              className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             />
 
-            <div className="absolute inset-0 bg-slate-950/40 transition-colors group-hover:bg-slate-950/50" />
+            {/* Gradient overlay for readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent transition-opacity duration-300 group-hover:opacity-90" />
 
-            <div className="relative z-10 mt-auto flex w-full items-end justify-between gap-3 p-5 sm:p-6">
-              <div>
-                <h3 className="text-2xl font-semibold tracking-tight text-surface">
-                  {location.name}
-                </h3>
-
-                <p className="mt-1 text-sm text-surface">
-                  {location.subtitle}
-                </p>
-              </div>
-
-              <span
-                aria-hidden="true"
-                className="flex size-10 shrink-0 items-center justify-center rounded-full border border-surface text-surface transition-colors group-hover:bg-surface group-hover:text-text-primary"
-              >
-                →
-              </span>
+            {/* Location name positioned absolute at bottom */}
+            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 z-10">
+              <h3 className="text-xl font-bold tracking-tight text-white transition-transform duration-300 group-hover:translate-x-1">
+                {location.name}
+              </h3>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
     </section>

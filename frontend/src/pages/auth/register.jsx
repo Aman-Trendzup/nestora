@@ -1,9 +1,11 @@
 
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
+import register from "../../assets/images/auth/register.webp";
 
 const Register = () => {
+  const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -112,6 +114,15 @@ const Register = () => {
       setIsSuccess(true);
       setServerMessage(data.message || "Account created successfully!");
 
+      // Role-based redirection
+      if (registeredUser.role === "owner") {
+        navigate("/owner/dashboard");
+      } else if (registeredUser.role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/");
+      }
+
     } catch (error) {
       setIsSuccess(false);
       setServerMessage(
@@ -127,87 +138,67 @@ const Register = () => {
     }`;
 
   return (
-    <main className="min-h-screen bg-background p-2 sm:p-3">
+    <main className="min-h-screen lg:h-screen lg:overflow-hidden bg-background p-2 sm:p-3">
 
-      <div className="grid min-h-[calc(100vh-16px)] overflow-hidden rounded-2xl border border-border bg-surface sm:min-h-[calc(100vh-24px)] sm:rounded-3xl lg:grid-cols-[42%_58%]">
+      <div className="grid h-full min-h-[calc(100vh-16px)] sm:min-h-[calc(100vh-24px)] lg:min-h-0 lg:h-full overflow-hidden rounded-2xl border border-border bg-surface sm:rounded-3xl lg:grid-cols-[42%_58%]">
 
-        {/* LEFT BRAND PANEL */}
+        {/* LEFT BRAND PANEL (Fixed height to screen on desktop) */}
+        <section className="relative hidden lg:flex h-full flex-col justify-between overflow-hidden bg-slate-900 p-8 text-white sm:p-10 lg:p-12 shrink-0">
+          {/* Background Photo with black/60 overlay */}
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 hover:scale-105"
+            style={{
+              backgroundImage: `url(${register})`,
+            }}
+          />
+          <div className="absolute inset-0 bg-black/60" />
 
-        <section className="relative flex min-h-[360px] flex-col justify-between overflow-hidden bg-primary px-7 py-8 text-white sm:px-10 sm:py-10 lg:min-h-full lg:px-12 lg:py-12">
+          {/* Top: Logo matching reference position */}
+          <div className="relative z-10">
+            <Link
+              to="/"
+              aria-label="NESTORA home"
+              className="inline-flex items-center gap-2.5 group"
+            >
 
-          <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-white/5 blur-3xl" />
+              {/* Brand Wordmark */}
+              <span className="font-serif text-xl font-bold tracking-tight text-white drop-shadow-sm">
+                Nest<span className="italic font-normal">ora</span>
+                <span className="text-primary font-bold">.</span>
+              </span>
+            </Link>
+          </div>
 
-          <div className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-white/5 blur-3xl" />
-
-          {/* Brand */}
-
-          <Link
-            to="/"
-            className="relative z-10 w-fit text-2xl font-bold tracking-tight"
-          >
-            NESTORA<span className="text-accent">.</span>
-          </Link>
-
-          {/* Content */}
-
-          <div className="relative z-10 mx-auto flex max-w-md flex-col items-center py-10 text-center lg:py-0">
-
-            <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/10 bg-white/10">
-              <svg
-                viewBox="0 0 48 48"
-                fill="none"
-                className="h-11 w-11"
-                aria-hidden="true"
-              >
-                <path
-                  d="M6 22L24 7L42 22V41H28V29H20V41H6V22Z"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M3 23L24 5L45 23"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-
-            <span className="mb-4 text-xs font-semibold uppercase tracking-[0.25em] text-white/50">
-              YOUR NEXT CHAPTER STARTS HERE
-            </span>
-
-            <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-[42px]">
-              A space for every ambition.
+          {/* Middle: Main Statement Headline matching reference */}
+          <div className="relative z-10 my-auto py-10 lg:py-0">
+            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-semibold tracking-tight text-white leading-[1.3] max-w-md drop-shadow-sm">
+              The workspace where modern creators, remote teams and growing startups find their space to thrive.
             </h1>
+          </div>
 
-            <p className="mt-5 max-w-sm text-sm leading-7 text-white/65 sm:text-base">
-              Whether it's a focused day or a fresh perspective,
-              find a workspace that helps you do your best work.
-            </p>
+          {/* Bottom: Customer Testimonial Quote & Author matching reference */}
+          <div className="relative z-10 pt-4">
+            <blockquote className="text-xs sm:text-sm text-white/90 font-medium leading-relaxed mb-4 drop-shadow-xs">
+              &ldquo;Booking a flexible desk or team office takes seconds with zero upfront lease commitments.&rdquo;
+            </blockquote>
 
-            <div className="mt-10 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-white/30" />
-              <span className="h-2 w-7 rounded-full bg-white" />
-              <span className="h-2 w-2 rounded-full bg-white/30" />
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-7 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white shadow-xs shrink-0 ring-2 ring-white/10">
+                MP
+              </div>
+              <div className="text-xs flex items-center gap-1.5 flex-wrap">
+                <span className="font-semibold text-white/95">Meera Patel</span>
+                <span className="text-white/40">·</span>
+                <span className="text-white/70">Operations Lead, StudioPulse</span>
+              </div>
             </div>
-
           </div>
-
-          {/* Footer */}
-
-          <div className="relative z-10 flex items-center justify-between gap-3 text-[11px] text-white/45">
-            <span>© {new Date().getFullYear()} NESTORA</span>
-            <span className="tracking-widest">SPACE TO DO MORE.</span>
-          </div>
-
         </section>
 
 
-        {/* RIGHT REGISTRATION PANEL */}
+        {/* RIGHT REGISTRATION PANEL (Scrollable without visible scrollbar) */}
 
-        <section className="flex min-h-[750px] flex-col justify-between bg-surface px-6 py-7 sm:px-10 sm:py-9 md:px-14 lg:px-16 xl:px-24">
+        <section className="flex flex-col justify-between bg-surface px-6 py-7 sm:px-10 sm:py-9 md:px-14 lg:px-16 xl:px-24 h-full overflow-y-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
           {/* Header */}
 
@@ -215,11 +206,12 @@ const Register = () => {
 
             <Link
               to="/"
-              className="text-xl font-bold tracking-tight text-primary lg:text-2xl"
+              aria-label="NESTORA home"
+              className="shrink-0 font-serif text-2xl font-bold tracking-tight text-text-primary"
             >
-              N<span className="text-accent">.</span>
+              Nest<span className="italic font-normal">ora</span>
+              <span className="text-primary">.</span>
             </Link>
-
             <p className="text-xs text-text-secondary sm:text-sm">
               Already a member?{" "}
               <Link
@@ -235,7 +227,7 @@ const Register = () => {
 
           {/* Form Content */}
 
-          <div className="mx-auto flex w-full max-w-[440px] flex-1 flex-col justify-center py-12">
+          <div className="mx-auto flex w-full max-w-[440px] sm:max-w-none flex-1 flex-col justify-center py-12">
 
             <div className="mb-7">
 
@@ -481,8 +473,8 @@ const Register = () => {
                 <div
                   role="alert"
                   className={`rounded-lg border p-3 text-sm ${isSuccess
-                      ? "border-green-200 bg-green-50 text-green-700"
-                      : "border-red-200 bg-red-50 text-red-600"
+                    ? "border-green-200 bg-green-50 text-green-700"
+                    : "border-red-200 bg-red-50 text-red-600"
                     }`}
                 >
                   {serverMessage}

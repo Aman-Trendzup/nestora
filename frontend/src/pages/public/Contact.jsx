@@ -1,92 +1,58 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router";
+import { useAuth } from "../../context/AuthContext";
+import FAQ from "../../components/common/FAQ";
+import {
+  FiCheckCircle,
+  FiAlertCircle,
+  FiX,
+  FiCheck,
+  FiMail,
+  FiPhone,
+  FiClock,
+} from "react-icons/fi";
+import heroImage from "../../assets/images/contact/contact.webp"
 
-const heroImage =
-  "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=2000&q=85";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const faqs = [
-  {
-    question: "How do I book a workspace?",
-    answer:
-      "Explore available workspaces, choose the space that suits your needs, select your preferred date and time, and submit your booking. You can manage your reservation from your account.",
-  },
-  {
-    question: "Do I need an account to make a booking?",
-    answer:
-      "You can explore workspaces without an account. However, you'll need to register or log in to confirm and manage your bookings.",
-  },
-  {
-    question: "Can I cancel or reschedule my booking?",
-    answer:
-      "Cancellation and rescheduling depend on the booking terms of the workspace. You can view your reservation details and available options from your account.",
-  },
-  {
-    question: "How can I list my workspace on NESTORA?",
-    answer:
-      "Select 'List your space' and create a workspace owner account. Once registered, you can submit your workspace details for review and approval.",
-  },
-  {
-    question: "How do payments work?",
-    answer:
-      "NESTORA helps you discover and reserve workspaces. Payment is made directly at the workspace, according to its payment terms. Online payments are not currently supported.",
-  },
-];
-
-const contactOptions = [
-  {
-    number: "01",
-    title: "Booking support",
-    description:
-      "Need help with a reservation or finding the right workspace?",
-    icon: "calendar",
-  },
-  {
-    number: "02",
-    title: "Workspace owners",
-    description:
-      "Want to list your space or need help managing your listing?",
-    icon: "building",
-  },
-  {
-    number: "03",
-    title: "General enquiries",
-    description:
-      "Have a question, suggestion or something else to share?",
-    icon: "message",
-  },
-];
-
-const icons = {
-  calendar: (
-    <>
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M16 3v4M8 3v4M3 10h18" />
-      <path d="m9 15 2 2 4-4" />
-    </>
-  ),
-  building: (
-    <>
-      <rect x="4" y="3" width="16" height="18" rx="2" />
-      <path d="M9 21v-4h6v4M8 7h2M14 7h2M8 11h2M14 11h2" />
-    </>
-  ),
-  message: (
-    <>
-      <path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5Z" />
-      <path d="M8 11h8M8 15h5" />
-    </>
-  ),
-};
-
-const Contact = () => {
-  const [activeFaq, setActiveFaq] = useState(0);
+const Contact = ({ isOwnerSupport = false }) => {
+  const { user } = useAuth();
+  const location = useLocation();
+  const isOwnerView = isOwnerSupport || location.pathname.startsWith("/owner/support");
 
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
+    name: user?.fullName || "",
+    email: user?.email || "",
+    subject: isOwnerView ? "Host / Workspace Support Enquiry" : "",
     message: "",
   });
+
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: prev.name || user.fullName || "",
+        email: prev.email || user.email || "",
+        subject: isOwnerView && !prev.subject ? "Host / Workspace Support Enquiry" : prev.subject,
+      }));
+    }
+  }, [user, isOwnerView]);
+
+  const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({ type: "", text: "" });
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
+    setFormData({
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+    });
+    setStatusMessage({ type: "", text: "" });
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -95,14 +61,265 @@ const Contact = () => {
       ...prev,
       [name]: value,
     }));
+
+    if (statusMessage.text) {
+      setStatusMessage({ type: "", text: "" });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Connect your contact form API here.
-    console.log("Contact form data:", formData);
+    if (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
+      setStatusMessage({
+        type: "error",
+        text: "Please fill out all required fields.",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setStatusMessage({ type: "", text: "" });
+
+      const response = await fetch(`${API_BASE_URL}/api/contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          subject: formData.subject.trim(),
+          message: formData.message.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send your message. Please try again.");
+      }
+
+      setStatusMessage({
+        type: "success",
+        text: data.message || "Thank you! Your message has been sent successfully.",
+      });
+
+      // Show the success modal with home hyperlink
+      setShowSuccessModal(true);
+
+      // Clear the form on success
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      });
+    } catch (error) {
+      console.error("Contact Form Submission Error:", error);
+      setStatusMessage({
+        type: "error",
+        text: error.message || "Unable to reach the server. Please check your connection and try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (isOwnerView) {
+    return (
+      <div className="space-y-6 max-w-5xl">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary">
+                Host & Partner Support
+              </h1>
+              <span className="text-xs bg-primary/10 text-primary font-semibold px-2.5 py-0.5 rounded-full">
+                Host Helpdesk
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-text-secondary">
+              Need assistance managing your spaces, blocked dates, or reservations? Send our team a message.
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Contact Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 rounded-xl border border-border bg-surface flex items-center gap-3">
+            <div className="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <FiMail className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-text-secondary">Host Support Email</p>
+              <p className="text-xs sm:text-sm font-semibold text-text-primary truncate">
+                partners@nestora.com
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-border bg-surface flex items-center gap-3">
+            <div className="size-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <FiPhone className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-text-secondary">Direct Host Helpline</p>
+              <p className="text-xs sm:text-sm font-semibold text-text-primary truncate">
+                +91 98765 43210
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-border bg-surface flex items-center gap-3">
+            <div className="size-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+              <FiClock className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-text-secondary">Operating Hours</p>
+              <p className="text-xs sm:text-sm font-semibold text-text-primary truncate">
+                Mon - Sat, 9 AM - 8 PM
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Form Card */}
+        <div className="rounded-2xl border border-border bg-surface p-5 sm:p-8 shadow-xs">
+          <h2 className="text-lg font-bold text-text-primary mb-1">
+            Send a Support Message
+          </h2>
+          <p className="text-xs text-text-secondary mb-6">
+            Our host success managers respond to queries within 2 hours during business hours.
+          </p>
+
+          {statusMessage.text && (
+            <div
+              className={`mb-6 p-4 rounded-xl text-sm flex items-center gap-3 border ${
+                statusMessage.type === "success"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : "bg-rose-50 text-rose-800 border-rose-200"
+              }`}
+            >
+              {statusMessage.type === "success" ? (
+                <FiCheckCircle className="size-5 shrink-0 text-emerald-600" />
+              ) : (
+                <FiAlertCircle className="size-5 shrink-0 text-rose-600" />
+              )}
+              <span>{statusMessage.text}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-text-primary mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full text-xs sm:text-sm rounded-lg border border-border px-3.5 py-2.5 focus:outline-hidden focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-text-primary mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full text-xs sm:text-sm rounded-lg border border-border px-3.5 py-2.5 focus:outline-hidden focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-text-primary mb-1">
+                Subject
+              </label>
+              <input
+                type="text"
+                required
+                name="subject"
+                placeholder="e.g. Issue updating workspace pricing, booking inquiry"
+                value={formData.subject}
+                onChange={handleChange}
+                className="w-full text-xs sm:text-sm rounded-lg border border-border px-3.5 py-2.5 focus:outline-hidden focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-text-primary mb-1">
+                Message / Description
+              </label>
+              <textarea
+                required
+                rows={5}
+                name="message"
+                placeholder="Please describe your issue or query in detail..."
+                value={formData.message}
+                onChange={handleChange}
+                className="w-full text-xs sm:text-sm rounded-lg border border-border px-3.5 py-2.5 focus:outline-hidden focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover transition shadow-xs disabled:opacity-50"
+              >
+                {loading ? "Sending..." : "Submit Support Request"}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* SUCCESS MODAL */}
+        {showSuccessModal && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs"
+            onClick={handleCloseModal}
+          >
+            <div
+              className="relative w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 text-center shadow-2xl border border-border"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                aria-label="Close modal"
+                className="absolute top-4 right-4 rounded-lg p-1.5 text-text-secondary hover:bg-slate-100 hover:text-text-primary transition"
+              >
+                <FiX className="size-5" />
+              </button>
+              <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mb-4">
+                <FiCheck className="size-7 stroke-[2.5]" />
+              </div>
+              <h3 className="text-xl font-bold text-text-primary">
+                Support Request Received!
+              </h3>
+              <p className="mt-2 text-sm text-text-secondary leading-relaxed">
+                Thank you! Our partner relations team has received your inquiry and will follow up with you at {formData.email}.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <main className="bg-background text-text-primary">
@@ -171,6 +388,23 @@ const Contact = () => {
               </span>
 
             </div>
+
+            {/* Status Alert Notification */}
+            {statusMessage.text && (
+              <div
+                className={`mb-6 p-4 rounded-xl text-sm flex items-center gap-3 border ${statusMessage.type === "success"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : "bg-rose-50 text-rose-800 border-rose-200"
+                  }`}
+              >
+                {statusMessage.type === "success" ? (
+                  <FiCheckCircle className="size-5 shrink-0 text-emerald-600" />
+                ) : (
+                  <FiAlertCircle className="size-5 shrink-0 text-rose-600" />
+                )}
+                <span>{statusMessage.text}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit}>
 
@@ -273,167 +507,67 @@ const Contact = () => {
 
               <button
                 type="submit"
-                className="group mt-7 flex w-full items-center justify-center gap-3 rounded-md bg-primary px-6 py-4 text-sm font-semibold text-white transition hover:bg-primary-hover"
+                disabled={loading}
+                className="group mt-7 flex w-full items-center justify-center gap-3 rounded-md bg-primary px-6 py-4 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed shadow-xs"
               >
-                Send Message
+                {loading ? "Sending Message..." : "Send Message"}
 
-                <span className="transition-transform group-hover:translate-x-1">
-                  →
-                </span>
+                {!loading && (
+                  <span className="transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
+                )}
               </button>
 
             </form>
           </div>
 
-          {/* Contact category cards */}
-
-          <div className="mx-auto mt-10 grid max-w-5xl items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
-
-            {contactOptions.map((item) => (
-              <a
-                key={item.number}
-                href="#contact-form"
-                className="group flex h-full flex-col rounded-xl border border-border bg-white p-5 transition hover:border-primary sm:p-6"
-              >
-
-                <div className="mb-6 flex items-center justify-between">
-
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
-
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-5 w-5"
-                    >
-                      {icons[item.icon]}
-                    </svg>
-
-                  </div>
-
-                  <span className="text-[10px] font-medium tracking-widest text-text-secondary">
-                    {item.number}
-                  </span>
-
-                </div>
-
-                <h3 className="text-sm font-semibold">
-                  {item.title}
-                </h3>
-
-                <p className="mt-2 flex-1 text-xs leading-6 text-text-secondary">
-                  {item.description}
-                </p>
-
-                <span className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-primary">
-                  Get in touch
-
-                  <span className="transition-transform group-hover:translate-x-1">
-                    →
-                  </span>
-                </span>
-
-              </a>
-            ))}
-
-          </div>
 
         </div>
       </section>
 
 
-      {/* FAQ SECTION */}
+      {/* REUSABLE FAQ SECTION */}
+      <FAQ />
 
-      <section className="bg-background px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
+      {/* SUCCESS MODAL */}
+      {showSuccessModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs"
+          onClick={handleCloseModal}
+        >
+          <div
+            className="relative w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 text-center shadow-2xl border border-border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Only cross button */}
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              aria-label="Close modal"
+              className="absolute top-4 right-4 rounded-lg p-1.5 text-text-secondary hover:bg-slate-100 hover:text-text-primary transition"
+            >
+              <FiX className="size-5" />
+            </button>
 
-        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+            {/* Success icon */}
+            <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mb-4">
+              <FiCheck className="size-7 stroke-[2.5]" />
+            </div>
 
-          {/* FAQ introduction */}
+            <h3 className="text-xl font-bold text-text-primary">
+              Message Sent Successfully!
+            </h3>
 
-          <div>
-
-            <span className="mb-4 inline-block text-[11px] font-semibold uppercase tracking-[0.2em] text-text-secondary">
-              Need a little clarity?
-            </span>
-
-            <h2 className="max-w-md text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-              Frequently asked questions.
-            </h2>
-
-            <p className="mt-5 max-w-sm text-sm leading-7 text-text-secondary">
-              Find answers to common questions about discovering,
-              booking and listing workspaces on NESTORA.
+            <p className="mt-2 text-sm text-text-secondary leading-relaxed">
+              Thank you for contacting NESTORA. Your message has been safely received, and our team will get back to you shortly.
             </p>
 
-            <a
-              href="/spaces"
-              className="group mt-8 inline-flex items-center gap-4 rounded-md bg-primary px-5 py-3.5 text-xs font-semibold text-white transition hover:bg-primary-hover"
-            >
-              Explore Workspaces
-
-              <span className="transition-transform group-hover:translate-x-1">
-                →
-              </span>
-            </a>
-
           </div>
-
-          {/* FAQ accordion */}
-
-          <div className="border-t border-border">
-
-            {faqs.map((faq, index) => {
-              const isOpen = activeFaq === index;
-
-              return (
-                <div
-                  key={faq.question}
-                  className="border-b border-border"
-                >
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setActiveFaq(isOpen ? -1 : index)
-                    }
-                    aria-expanded={isOpen}
-                    className="flex w-full items-center justify-between gap-5 py-6 text-left"
-                  >
-
-                    <span className="text-sm font-semibold leading-6 sm:text-base">
-                      {faq.question}
-                    </span>
-
-                    <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-lg transition-colors ${
-                        isOpen
-                          ? "border-primary bg-primary text-white"
-                          : "bg-white text-text-secondary"
-                      }`}
-                    >
-                      {isOpen ? "−" : "+"}
-                    </span>
-
-                  </button>
-
-                  {isOpen && (
-                    <div className="max-w-xl pb-6 pr-10 text-sm leading-7 text-text-secondary">
-                      {faq.answer}
-                    </div>
-                  )}
-
-                </div>
-              );
-            })}
-
-          </div>
-
         </div>
-
-      </section>
+      )}
 
     </main>
   );

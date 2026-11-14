@@ -41,6 +41,7 @@ const sendUserResponse = (user) => ({
   role: user.role,
   businessName: user.businessName,
   businessCity: user.businessCity,
+  createdAt: user.createdAt,
 });
 
 const isValidEmail = (email) =>
@@ -400,4 +401,67 @@ export const logoutUser = (req, res) => {
     success: true,
     message: "Logged out successfully.",
   });
+};
+
+// ----------------------------------
+// UPDATE USER PROFILE
+// ----------------------------------
+
+export const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User account not found.",
+      });
+    }
+
+    const { fullName, phone, businessName, businessCity } = req.body;
+
+    if (fullName !== undefined) {
+      if (typeof fullName !== "string" || fullName.trim().length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: "Please enter a valid full name.",
+        });
+      }
+      user.fullName = fullName.trim();
+    }
+
+    if (phone !== undefined) {
+      if (phone && !isValidPhone(phone.trim())) {
+        return res.status(400).json({
+          success: false,
+          message: "Please enter a valid 10-digit Indian mobile number.",
+        });
+      }
+      user.phone = phone.trim();
+    }
+
+    if (user.role === "owner") {
+      if (businessName !== undefined) {
+        user.businessName = String(businessName || "").trim();
+      }
+      if (businessCity !== undefined) {
+        user.businessCity = String(businessCity || "").trim();
+      }
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully.",
+      user: sendUserResponse(user),
+    });
+  } catch (error) {
+    console.error("Update User Profile Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to update profile. Please try again later.",
+    });
+  }
 };

@@ -1,10 +1,13 @@
 
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router";
+import login from "../../assets/images/auth/login.webp"
 
 const Login = () => {
   const { refreshUser } = useAuth();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -85,7 +88,18 @@ const Login = () => {
         throw new Error("Unable to verify your session. Please try again.");
       }
 
-      navigate("/");
+      // Role-based redirection
+      if (loggedInUser.role === "owner") {
+        navigate("/owner/dashboard");
+      } else if (loggedInUser.role === "admin") {
+        const redirectParam = searchParams.get("redirect");
+        const fromState = location.state?.from?.pathname;
+        navigate(redirectParam || fromState || "/admin/dashboard");
+      } else {
+        const redirectParam = searchParams.get("redirect");
+        const fromState = location.state?.from?.pathname;
+        navigate(redirectParam || fromState || "/");
+      }
 
     } catch (error) {
       setServerError(
@@ -102,87 +116,44 @@ const Login = () => {
 
       <div className="grid min-h-[calc(100vh-16px)] overflow-hidden rounded-2xl border border-border bg-surface sm:min-h-[calc(100vh-24px)] sm:rounded-3xl lg:grid-cols-[42%_58%]">
 
-        {/* LEFT BRAND PANEL */}
+        {/* LEFT BRAND PANEL (Matching Reference UI) */}
+        <section className="relative hidden lg:flex min-h-[420px] flex-col justify-between overflow-hidden bg-slate-900 p-8 sm:p-10 lg:min-h-full lg:p-12">
+          {/* Atmospheric background photo matching reference */}
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 hover:scale-105"
+            style={{
+              backgroundImage: `url(${login})`
+            }}
+          />
 
-        <section className="relative flex min-h-[380px] flex-col justify-between overflow-hidden bg-primary px-7 py-8 text-white sm:px-10 sm:py-10 lg:min-h-full lg:px-12 lg:py-12">
+          {/* Soft ambient gradient overlay for crisp readability */}
+          <div className="absolute inset-0 bg-black/70" />
 
-          {/* Decorative background */}
+          {/* Top: Nestora Logo replacing the Unsplash logo, using project color theme */}
+          <div className="relative z-10">
+            <Link
+              to="/"
+              aria-label="NESTORA home"
+              className="inline-flex items-center gap-2.5 group"
+            >
+              <span className="font-serif text-2xl font-bold tracking-tight text-white drop-shadow-sm">
+                Nest<span className="italic font-normal">ora</span>
+                <span className="text-primary font-bold">.</span>
+              </span>
+            </Link>
+          </div>
 
-          <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-white/5 blur-3xl" />
-
-          <div className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-white/5 blur-3xl" />
-
-          {/* Brand */}
-
-          <Link
-            to="/"
-            className="relative z-10 w-fit text-2xl font-bold tracking-tight"
-          >
-            NESTORA<span className="text-accent">.</span>
-          </Link>
-
-          {/* Main Content */}
-
-          <div className="relative z-10 mx-auto flex max-w-md flex-col items-center py-10 text-center lg:py-0">
-
-            {/* Brand Icon */}
-
-            <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/10 bg-white/10">
-
-              <svg
-                viewBox="0 0 48 48"
-                fill="none"
-                className="h-11 w-11"
-                aria-hidden="true"
-              >
-                <path
-                  d="M6 22L24 7L42 22V41H28V29H20V41H6V22Z"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M3 23L24 5L45 23"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                />
-              </svg>
-
-            </div>
-
-            <span className="mb-4 text-xs font-semibold uppercase tracking-[0.25em] text-white/50">
-              A BETTER WAY TO WORK
-            </span>
-
-            <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-[42px]">
-              Find your space.
-              <br />
-              Make it count.
+          {/* Bottom Content matching reference image layout */}
+          <div className="relative z-10 max-w-lg">
+            <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-bold tracking-tight text-white leading-[1.15] drop-shadow-sm">
+              Creation starts here
             </h1>
 
-            <p className="mt-5 max-w-sm text-sm leading-7 text-white/65 sm:text-base">
-              From focused workdays to meaningful collaborations,
-              discover workspaces that make every workday better.
+            <p className="mt-3 text-xs sm:text-sm text-white/90 leading-relaxed max-w-md drop-shadow-xs">
+              Over 500+ verified coworking spaces, quiet desks, and private suites you can reserve in seconds.
             </p>
 
-            {/* Carousel Indicators */}
-
-            <div className="mt-10 flex items-center gap-2">
-              <span className="h-2 w-7 rounded-full bg-white" />
-              <span className="h-2 w-2 rounded-full bg-white/30" />
-              <span className="h-2 w-2 rounded-full bg-white/30" />
-            </div>
-
           </div>
-
-          {/* Left Footer */}
-
-          <div className="relative z-10 flex items-center justify-between gap-3 text-[11px] text-white/45">
-            <span>© {new Date().getFullYear()} NESTORA</span>
-            <span className="tracking-widest">SPACE TO DO MORE.</span>
-          </div>
-
         </section>
 
 
@@ -190,33 +161,23 @@ const Login = () => {
 
         <section className="flex min-h-[650px] flex-col justify-between bg-surface px-6 py-7 sm:px-10 sm:py-9 md:px-14 lg:px-16 xl:px-24">
 
-          {/* Top Header */}
-
-          <header className="flex items-center justify-between">
-
-            <Link
-              to="/"
-              className="text-xl font-bold tracking-tight text-primary lg:text-2xl"
-            >
-              N<span className="text-accent">.</span>
-            </Link>
-
-            <p className="text-xs text-text-secondary sm:text-sm">
-              New to NESTORA?{" "}
-              <Link
-                to="/register"
-                className="font-semibold text-primary underline underline-offset-4 transition-opacity hover:opacity-70"
-              >
-                Sign up
-              </Link>
-            </p>
-
-          </header>
-
-
           {/* Login Form */}
 
           <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center py-12">
+
+            {/* Mobile Brand Logo */}
+            <div className="mb-6 lg:hidden">
+              <Link
+                to="/"
+                aria-label="NESTORA home"
+                className="inline-flex items-center gap-2 group"
+              >
+                <span className="font-serif text-2xl font-bold tracking-tight text-text-primary">
+                  Nest<span className="italic font-normal">ora</span>
+                  <span className="text-primary font-bold">.</span>
+                </span>
+              </Link>
+            </div>
 
             {/* Heading */}
 
@@ -277,23 +238,12 @@ const Login = () => {
 
               <div>
 
-                <div className="mb-2 flex items-center justify-between">
-
-                  <label
-                    htmlFor="password"
-                    className="text-sm font-medium text-text-primary"
-                  >
-                    Password
-                  </label>
-
-                  <Link
-                    to="/forgot-password"
-                    className="text-xs font-medium text-text-secondary underline underline-offset-4 transition-colors hover:text-primary"
-                  >
-                    Forgot password?
-                  </Link>
-
-                </div>
+                <label
+                  htmlFor="password"
+                  className="mb-2 block text-sm font-medium text-text-primary"
+                >
+                  Password
+                </label>
 
                 <div className="relative">
 

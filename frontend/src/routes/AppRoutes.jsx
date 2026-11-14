@@ -2,8 +2,9 @@ import { Routes, Route } from "react-router";
 
 import PublicRoutes from "./PublicRoutes";
 import AuthRoutes from "./AuthRoutes";
-// import CustomerRoutes from "./CustomerRoutes";
-// import OwnerRoutes from "./OwnerRoutes";
+import customerRoutes from "./customerRoutes";
+import ownerRoutes from "./ownerRoutes";
+import adminRoutes from "./adminRoutes";
 
 import NotFound from "../pages/public/NotFound";
 
@@ -12,8 +13,9 @@ const AppRoutes = () => {
     <Routes>
       {PublicRoutes}
       {AuthRoutes}
-      {/* {CustomerRoutes}
-      {OwnerRoutes} */}
+      {customerRoutes}
+      {ownerRoutes}
+      {adminRoutes}
 
       <Route path="*" element={<NotFound />} />
     </Routes>

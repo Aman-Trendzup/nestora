@@ -3,9 +3,7 @@ import mongoose from "mongoose";
 import Workspace from "../models/Workspace.js";
 import Booking from "../models/Booking.js";
 
-// ----------------------------------
 // HELPERS
-// ----------------------------------
 
 const isValidTime = (time) =>
   typeof time === "string" &&
@@ -126,12 +124,62 @@ export const checkAvailability = async (req, res) => {
       _id: workspaceId,
       approvalStatus: "approved",
       isActive: true,
-    }).select("operatingHours capacity");
+    }).select("operatingHours capacity blockedDates type totalUnits pricing");
 
     if (!workspace) {
       return res.status(404).json({
         success: false,
         message: "Workspace is unavailable.",
+      });
+    }
+
+    const requestedGuests = Math.max(1, Math.floor(Number(req.query.guests) || 1));
+
+    // Validate guest capacity
+    if (requestedGuests > workspace.capacity) {
+      return res.status(200).json({
+        success: true,
+        available: false,
+        message: `Requested ${requestedGuests} guests exceeds maximum seating capacity of ${workspace.capacity} people.`,
+      });
+    }
+
+    // Validate duration availability from pricing settings
+    const rawPricing = workspace.pricing || {};
+    const hourlyEnabled = Boolean(
+      rawPricing.hourly?.enabled ??
+      (typeof rawPricing.hourly === "number" ? rawPricing.hourly > 0 : true)
+    );
+    const dailyEnabled = Boolean(
+      rawPricing.daily?.enabled ??
+      (typeof rawPricing.fullDay === "number" ? rawPricing.fullDay > 0 : true)
+    );
+
+    if (bookingType === "hourly" && !hourlyEnabled) {
+      return res.status(200).json({
+        success: true,
+        available: false,
+        message: "Hourly bookings are currently not offered for this workspace.",
+      });
+    }
+
+    if (bookingType === "full-day" && !dailyEnabled) {
+      return res.status(200).json({
+        success: true,
+        available: false,
+        message: "Daily bookings are currently not offered for this workspace.",
+      });
+    }
+
+    // Check if the owner has manually blocked this date
+    const blockedEntry = workspace.blockedDates?.find(
+      (entry) => entry.date === bookingDate
+    );
+    if (blockedEntry) {
+      return res.status(200).json({
+        success: true,
+        available: false,
+        reason: blockedEntry.reason || "This date has been reserved/blocked by the workspace owner.",
       });
     }
 
@@ -192,7 +240,7 @@ export const checkAvailability = async (req, res) => {
     }
 
     // ----------------------------------
-    // CHECK EXISTING BOOKINGS
+    // CHECK EXISTING BOOKINGS (CATEGORY-AWARE CONFLICT MANAGEMENT)
     // ----------------------------------
 
     const existingBookings = await Booking.find({
@@ -201,10 +249,10 @@ export const checkAvailability = async (req, res) => {
       status: {
         $in: ["pending", "confirmed"],
       },
-    }).select("bookingType startTime endTime");
+    }).select("bookingType startTime endTime guests");
 
-    const hasConflict = existingBookings.some((booking) => {
-      // Full-day bookings block the entire workspace.
+    const overlappingBookings = existingBookings.filter((booking) => {
+      // Full-day bookings overlap the entire day
       if (
         bookingType === "full-day" ||
         booking.bookingType === "full-day"
@@ -212,19 +260,55 @@ export const checkAvailability = async (req, res) => {
         return true;
       }
 
-      // Check hourly time overlap.
+      // Check hourly time overlap
       return (
         requestedStartTime < booking.endTime &&
         requestedEndTime > booking.startTime
       );
     });
 
-    if (hasConflict) {
-      return res.status(200).json({
-        success: true,
-        available: false,
-        message: "Workspace is already booked for this time.",
-      });
+    const isCoworking = workspace.type === "coworking";
+
+    if (isCoworking) {
+      // Coworking: Track individual seats occupied
+      const totalBookedSeats = overlappingBookings.reduce(
+        (sum, b) => sum + (Number(b.guests) || 1),
+        0
+      );
+      const remainingSeats = workspace.capacity - totalBookedSeats;
+
+      if (remainingSeats < requestedGuests) {
+        return res.status(200).json({
+          success: true,
+          available: false,
+          remainingSeats: Math.max(0, remainingSeats),
+          message:
+            remainingSeats <= 0
+              ? "All seats in this coworking space are booked for the selected time."
+              : `Only ${remainingSeats} seat(s) remaining, but ${requestedGuests} were requested.`,
+        });
+      }
+    } else {
+      // Private Office, Meeting Room, Conference Room: Track physical units
+      const totalUnits = Math.max(1, Number(workspace.totalUnits) || 1);
+      const bookedUnits = overlappingBookings.length;
+      const remainingUnits = totalUnits - bookedUnits;
+
+      if (remainingUnits <= 0) {
+        const unitName =
+          workspace.type === "private-office"
+            ? "private office"
+            : workspace.type === "meeting-room"
+              ? "meeting room"
+              : "conference room";
+
+        return res.status(200).json({
+          success: true,
+          available: false,
+          remainingUnits: 0,
+          message: `This ${unitName} is already reserved for the selected time.`,
+        });
+      }
     }
 
     // ----------------------------------

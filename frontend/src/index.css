@@ -30,3 +30,13 @@
   --shadow-md: var(--df-shadow-md);
 }
 
+/* Hide scrollbar while preserving smooth scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+

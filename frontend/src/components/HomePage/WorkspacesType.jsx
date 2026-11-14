@@ -1,21 +1,27 @@
+import { Link } from "react-router";
+import privateOffice from "../../assets/images/home/types/private office.webp"
+import meetingRoom from "../../assets/images/home/types/meeting room.webp"
+import conferenceRoom from "../../assets/images/home/types/conference room.webp"
+import coworkspace from "../../assets/images/home/types/coworkspace.webp"
+
+
 const workspaceTypes = [
   {
     title: "Coworking Spaces",
     description:
       "Find your flow in spaces built for focus, flexibility, and connection.",
     link: "/workspaces?type=coworking",
-    image:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=85",
+    image: coworkspace,
     imageAlt: "Bright, contemporary coworking space",
     layout: "lg:col-span-7",
   },
   {
-    title: "Dedicated Desks",
-    description: "Your own desk. Your routine. A better way to work.",
-    link: "/workspaces?type=dedicated-desk",
-    image:
-      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=800&q=85",
-    imageAlt: "Dedicated workstation in a modern office",
+    title: "Conference Rooms",
+    description:
+      "High-impact presentation spaces equipped for team workshops and executive sessions.",
+    link: "/workspaces?type=conference-room",
+    image: conferenceRoom,
+    imageAlt: "Executive conference and presentation room",
     layout: "lg:col-span-5",
   },
   {
@@ -23,8 +29,7 @@ const workspaceTypes = [
     description:
       "Room for your team to think, build, and grow together.",
     link: "/workspaces?type=private-office",
-    image:
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=85",
+    image: privateOffice,
     imageAlt: "Modern private office interior",
     layout: "lg:col-span-5",
   },
@@ -33,8 +38,7 @@ const workspaceTypes = [
     description:
       "Bring people together for conversations that move work forward.",
     link: "/workspaces?type=meeting-room",
-    image:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=85",
+    image: meetingRoom,
     imageAlt: "Professional meeting and collaboration space",
     layout: "lg:col-span-7",
   },
@@ -71,8 +75,8 @@ export default function WorkspaceTypes() {
                 {workspace.description}
               </p>
 
-              <a
-                href={workspace.link}
+              <Link
+                to={workspace.link}
                 className="mt-6 inline-flex items-center gap-2 border-b border-border pb-1 text-sm font-semibold text-text-primary transition-colors hover:border-primary hover:text-primary"
               >
                 Explore category
@@ -82,7 +86,7 @@ export default function WorkspaceTypes() {
                 >
                   →
                 </span>
-              </a>
+              </Link>
             </div>
 
             {/* Image on the right */}

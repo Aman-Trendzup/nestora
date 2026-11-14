@@ -11,6 +11,7 @@ import {
   getMyBookings,
   getBookingById,
   cancelBooking,
+  rescheduleBooking,
 } from "../controllers/bookingController.js";
 
 import {
@@ -36,6 +37,9 @@ router.get("/my-bookings", getMyBookings);
 
 // Cancel a booking
 router.patch("/:id/cancel", cancelBooking);
+
+// Reschedule a booking
+router.patch("/:id/reschedule", rescheduleBooking);
 
 // ----------------------------------
 // OWNER RESERVATION ROUTES

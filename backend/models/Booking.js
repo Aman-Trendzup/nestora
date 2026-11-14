@@ -63,15 +63,33 @@ const bookingSchema = new mongoose.Schema(
     },
 
     pricing: {
+      pricingType: {
+        type: String,
+        enum: ["per_person", "per_space"],
+        default: "per_person",
+      },
       unitPrice: {
         type: Number,
         required: true,
         min: 0,
       },
+      unitLabel: {
+        type: String,
+        default: "person",
+      },
       quantity: {
         type: Number,
         required: true,
         min: 1,
+      },
+      subtotal: {
+        type: Number,
+        min: 0,
+      },
+      discountAmount: {
+        type: Number,
+        min: 0,
+        default: 0,
       },
       totalAmount: {
         type: Number,
@@ -81,6 +99,24 @@ const bookingSchema = new mongoose.Schema(
       currency: {
         type: String,
         default: "INR",
+      },
+      breakdownText: {
+        type: String,
+        default: "",
+      },
+    },
+
+    coupon: {
+      code: {
+        type: String,
+        trim: true,
+        uppercase: true,
+        default: null,
+      },
+      discountAmount: {
+        type: Number,
+        default: 0,
+        min: 0,
       },
     },
 
@@ -113,6 +149,28 @@ const bookingSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    rescheduledAt: {
+      type: Date,
+      default: null,
+    },
+
+    rescheduleHistory: [
+      {
+        previousBookingDate: Date,
+        previousStartTime: String,
+        previousEndTime: String,
+        previousDuration: Number,
+        rescheduledAt: {
+          type: Date,
+          default: Date.now,
+        },
+        reason: {
+          type: String,
+          default: "",
+        },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -122,6 +180,7 @@ const bookingSchema = new mongoose.Schema(
 // Indexes for booking queries
 bookingSchema.index({ customer: 1, createdAt: -1 });
 bookingSchema.index({ workspace: 1, bookingDate: 1, status: 1 });
+bookingSchema.index({ status: 1, bookingDate: 1, createdAt: -1 });
 
 const Booking = mongoose.model("Booking", bookingSchema);
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
+import ownerRegister from "../../assets/images/auth/owner register.webp";
 
 
 const OwnerRegister = () => {
@@ -139,7 +140,7 @@ const OwnerRegister = () => {
         );
       }
 
-      navigate("/");
+      navigate("/owner/dashboard");
     } catch (error) {
       setServerMessage(
         error.message || "Something went wrong. Please try again."
@@ -151,78 +152,82 @@ const OwnerRegister = () => {
 
 
   return (
-    <main className="min-h-screen bg-background p-2 sm:p-3">
-      <div className="mx-auto grid min-h-[calc(100vh-16px)] max-w-[1440px] overflow-hidden rounded-2xl bg-surface lg:grid-cols-2">
+    <main className="min-h-screen lg:h-screen lg:overflow-hidden bg-background p-2 sm:p-3">
+      <div className="grid h-full min-h-[calc(100vh-16px)] sm:min-h-[calc(100vh-24px)] lg:min-h-0 lg:h-full overflow-hidden rounded-2xl border border-border bg-surface sm:rounded-3xl lg:grid-cols-[42%_58%]">
 
-        {/* LEFT BRAND PANEL */}
-        <section className="relative hidden flex-col justify-between overflow-hidden bg-primary p-10 text-white lg:flex xl:p-14">
-          <Link to="/" className="relative z-10 flex items-center gap-2">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 text-lg font-bold">
-              N.
-            </span>
-            <span className="text-xl font-semibold tracking-wide">
-              NESTORA
-            </span>
-          </Link>
+        {/* LEFT BRAND & DASHBOARD PANEL (Fixed height to screen on desktop) */}
+        <section className="relative hidden lg:flex h-full flex-col justify-between overflow-hidden bg-slate-900 p-8 text-white sm:p-10 lg:p-12 shrink-0">
+          {/* Background image with black/60 overlay */}
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 hover:scale-105"
+            style={{
+              backgroundImage: `url(${ownerRegister})`,
+            }}
+          />
+          <div className="absolute inset-0 bg-black/60" />
 
-          <div className="relative z-10 max-w-lg">
-            <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-white/60">
-              FOR WORKSPACE PARTNERS
-            </p>
-
-            <h1 className="text-4xl font-semibold leading-tight xl:text-5xl">
-              Your space has
-              <br />
-              a place here.
-            </h1>
-
-            <p className="mt-6 max-w-md text-base leading-7 text-white/70">
-              Bring your workspace to a wider audience. Connect with people
-              looking for the right place to work, meet and collaborate.
-            </p>
-          </div>
-
-          <div className="relative z-10 flex items-center justify-between border-t border-white/15 pt-6 text-xs text-white/50">
-            <span>BUILT FOR BETTER WORKSPACES</span>
-            <span>NESTORA / PARTNERS</span>
-          </div>
-
-          {/* Decorative background element */}
-          <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full border border-white/10" />
-          <div className="pointer-events-none absolute -bottom-28 -right-28 h-72 w-72 rounded-full border border-white/10" />
-        </section>
-
-        {/* RIGHT FORM PANEL */}
-        <section className="flex items-center justify-center px-5 py-10 sm:px-10 lg:px-12 xl:px-16">
-          <div className="w-full max-w-lg">
-
-            {/* Mobile brand */}
-            <Link to="/" className="mb-10 flex items-center gap-2 lg:hidden">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-lg font-bold text-white">
-                N.
-              </span>
-              <span className="text-xl font-semibold text-text-primary">
-                NESTORA
+          {/* Top Brand & Header */}
+          <div className="relative z-10">
+            <Link
+              to="/"
+              aria-label="NESTORA home"
+              className="inline-flex items-center gap-2.5 group mb-6"
+            >
+              <span className="font-serif text-2xl font-bold tracking-tight text-white drop-shadow-sm">
+                Nest<span className="italic font-normal">ora</span>
+                <span className="text-primary font-bold">.</span>
               </span>
             </Link>
 
-            <div className="mb-8 flex items-center justify-between">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-text-secondary">
-                PARTNER REGISTRATION
-              </p>
+            <h1 className="mt-2 text-2xl sm:text-3xl xl:text-4xl font-bold tracking-tight text-white leading-tight drop-shadow-sm">
+              Manage your spaces & bookings in real time.
+            </h1>
 
-              <p className="text-sm text-text-secondary">
-                Already a partner?{" "}
-                <Link
-                  to="/login"
-                  className="font-semibold text-primary transition hover:text-primary-hover"
-                >
-                  Sign in
-                </Link>
-              </p>
-            </div>
+            <p className="mt-2.5 text-xs sm:text-sm text-white/90 max-w-md leading-relaxed drop-shadow-xs">
+              Full control over your pricing, slot availability, and guest check-ins from a powerful owner dashboard.
+            </p>
+          </div>
+
+          {/* Bottom Value Props */}
+          <div className="relative z-10 flex flex-col items-start justify-between text-xs text-white/90 gap-1.5 drop-shadow-xs">
+            <span>✓ Direct Offline Payments</span>
+            <span>✓ Real-time Slot Control</span>
+            <span>✓ Zero Listing Fees</span>
+          </div>
+        </section>
+
+        {/* RIGHT FORM PANEL (Scrollable without visible scrollbar) */}
+        <section className="flex flex-col justify-between bg-surface px-6 py-7 sm:px-10 sm:py-9 md:px-14 lg:px-16 xl:px-24 h-full overflow-y-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
+          {/* Header */}
+          <header className="flex items-center justify-between">
+            <Link
+              to="/"
+              aria-label="NESTORA home"
+              className="shrink-0 font-serif text-2xl font-bold tracking-tight text-text-primary"
+            >
+              Nest<span className="italic font-normal">ora</span>
+              <span className="text-primary">.</span>
+            </Link>
+
+            <p className="text-xs text-text-secondary sm:text-sm">
+              Already a partner?{" "}
+              <Link
+                to="/login"
+                className="font-semibold text-primary underline underline-offset-4 hover:opacity-70"
+              >
+                Sign in
+              </Link>
+            </p>
+          </header>
+
+          {/* Form Content */}
+          <div className="mx-auto flex w-full max-w-[440px] sm:max-w-none flex-1 flex-col justify-center py-12">
 
             <div className="mb-7">
+              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-text-secondary">
+                FOR WORKSPACE OWNERS
+              </span>
               <h2 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">
                 List your workspace.
               </h2>
@@ -246,9 +251,6 @@ const OwnerRegister = () => {
 
               {/* PERSONAL DETAILS */}
               <div>
-                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                  YOUR DETAILS
-                </p>
 
                 <div className="space-y-4">
                   <div>
@@ -312,11 +314,7 @@ const OwnerRegister = () => {
               </div>
 
               {/* BUSINESS DETAILS */}
-              <div className="border-t border-border pt-5">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                  WORKSPACE DETAILS
-                </p>
-
+              <div className="pt-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-text-primary">
@@ -355,11 +353,7 @@ const OwnerRegister = () => {
               </div>
 
               {/* PASSWORD */}
-              <div className="border-t border-border pt-5">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                  ACCOUNT SECURITY
-                </p>
-
+              <div className="pt-5">
                 <div className="space-y-4">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-text-primary">
@@ -388,9 +382,6 @@ const OwnerRegister = () => {
                     {errors.password && (
                       <p className="mt-1 text-xs text-red-500">{errors.password}</p>
                     )}
-                    <p className="mt-1 text-xs text-text-secondary">
-                      Use at least 8 characters.
-                    </p>
                   </div>
 
                   <div>
@@ -461,26 +452,31 @@ const OwnerRegister = () => {
                 {isSubmitting ? "Creating account..." : "Create partner account"}
                 {!isSubmitting && <FiArrowRight />}
               </button>
-
-              <p className="text-center text-xs leading-5 text-text-secondary">
-                Your workspace will not be published automatically. You'll
-                complete your listing after creating your account.
-              </p>
             </form>
 
-            <div className="mt-8 border-t border-border pt-5 text-center">
-              <p className="text-xs text-text-secondary">
-                Looking for a workspace instead?{" "}
-                <Link to="/register" className="font-semibold text-primary">
-                  Create a customer account
-                </Link>
-              </p>
-            </div>
-
-            <p className="mt-6 text-center text-xs text-text-secondary">
-              © {new Date().getFullYear()} NESTORA. All rights reserved.
+            <p className="mt-8 text-center text-sm text-text-secondary">
+              Looking for a workspace instead?{" "}
+              <Link
+                to="/register"
+                className="font-semibold text-primary underline underline-offset-4 hover:opacity-70"
+              >
+                Create a customer account
+              </Link>
             </p>
           </div>
+
+          {/* Footer */}
+          <footer className="flex items-center justify-between gap-3 text-xs text-text-secondary">
+            <span>© {new Date().getFullYear()} NESTORA</span>
+            <div className="flex items-center gap-5">
+              <Link to="/privacy-policy" className="hover:text-primary">
+                Privacy Policy
+              </Link>
+              <Link to="/contact" className="hover:text-primary">
+                Support
+              </Link>
+            </div>
+          </footer>
         </section>
       </div>
     </main>

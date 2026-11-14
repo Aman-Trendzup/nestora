@@ -59,6 +59,9 @@ const userSchema = new mongoose.Schema(
     }
 );
 
+// Indexes for fast administrative filtering & auth lookups
+userSchema.index({ role: 1, isActive: 1, createdAt: -1 });
+
 // Hash password before saving
 userSchema.pre("save", async function () {
     if (!this.isModified("password")) return;

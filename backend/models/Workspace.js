@@ -19,7 +19,6 @@ const workspaceSchema = new mongoose.Schema({
   type: String,
   enum: [
     "coworking",
-    "dedicated-desk",
     "private-office",
     "meeting-room",
     "conference-room",
@@ -34,10 +33,17 @@ const workspaceSchema = new mongoose.Schema({
   },
 
   capacity: {
-  type: Number,
-  required: true,
-  min: 1,
-},
+    type: Number,
+    required: true,
+    min: 1,
+  },
+
+  // Number of bookable physical units (offices/meeting rooms/conference rooms)
+  totalUnits: {
+    type: Number,
+    min: 1,
+    default: 1,
+  },
 
   // location 
 
@@ -83,23 +89,39 @@ type:Number,
 min:0,
 },
 
-  // pricing
-
+  // Category-based dynamic pricing
   pricing: {
-    hourly: {
-      type: Number,
-      min: 0,
-      default: null,
+    pricingType: {
+      type: String,
+      enum: ["per_person", "per_space"],
+      default: "per_person",
     },
-    fullDay: {
-      type: Number,
-      min: 0,
-      default: null,
+    hourly: {
+      enabled: {
+        type: Boolean,
+        default: true,
+      },
+      price: {
+        type: Number,
+        min: 0,
+        default: null,
+      },
+    },
+    daily: {
+      enabled: {
+        type: Boolean,
+        default: true,
+      },
+      price: {
+        type: Number,
+        min: 0,
+        default: null,
+      },
     },
     currency: {
       type: String,
       default: "INR",
-    }
+    },
   },
 
   // amenities
@@ -118,6 +140,22 @@ min:0,
     url: {
       type: String,
       required: true,
+    },
+    filename: {
+      type: String,
+      default: "",
+    },
+    originalName: {
+      type: String,
+      default: "",
+    },
+    size: {
+      type: Number,
+      default: 0,
+    },
+    format: {
+      type: String,
+      default: "webp",
     },
     publicId: {
       type: String,
@@ -139,6 +177,23 @@ min:0,
     type: String,
     enum: ["pending", "approved", "rejected"],
     default: "pending",
+  },
+
+  rejectionReason: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+
+  approvedAt: {
+    type: Date,
+    default: null,
+  },
+
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
   },
 
   // operation
@@ -277,11 +332,57 @@ min:0,
   isActive:{
     type:Boolean,
     default:true,
-  }
-},{
-  timestamps:true,
-}) 
+  },
 
+  blockedDates: [
+    {
+      date: {
+        type: String, // Format: YYYY-MM-DD
+        required: true,
+      },
+      reason: {
+        type: String,
+        trim: true,
+        default: "Maintenance / Unavailable",
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
+},{
+  timestamps: true,
+});
+
+// Backward-compatibility hook: Normalize legacy pricing fields on document initialization
+workspaceSchema.post("init", function (doc) {
+  if (doc && doc.pricing) {
+    if (typeof doc.pricing.hourly === "number") {
+      doc.pricing.hourly = {
+        enabled: doc.pricing.hourly > 0,
+        price: doc.pricing.hourly,
+      };
+    }
+    if (typeof doc.pricing.fullDay === "number") {
+      doc.pricing.daily = {
+        enabled: doc.pricing.fullDay > 0,
+        price: doc.pricing.fullDay,
+      };
+    }
+    if (!doc.pricing.pricingType) {
+      doc.pricing.pricingType =
+        doc.type === "coworking" ? "per_person" : "per_space";
+    }
+  }
+  if (doc && !doc.totalUnits) {
+    doc.totalUnits = 1;
+  }
+});
+
+// Indexes for platform search and admin moderation filtering
+workspaceSchema.index({ approvalStatus: 1, isActive: 1, createdAt: -1 });
+workspaceSchema.index({ type: 1, "address.city": 1, approvalStatus: 1 });
 
 const Workspace = mongoose.model("Workspace", workspaceSchema);
 
