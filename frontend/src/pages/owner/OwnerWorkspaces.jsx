@@ -16,8 +16,7 @@ import {
 } from "react-icons/fi";
 import { getFormattedPricingDisplay } from "../../utils/pricingCalculator";
 import { getImageUrl } from "../../utils/imageHelper";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import API_BASE_URL from "../../utils/apiConfig";
 
 const formatPrice = (amount) =>
   `₹${Number(amount || 0).toLocaleString("en-IN")}`;

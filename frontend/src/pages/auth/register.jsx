@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import register from "../../assets/images/auth/register.webp";
+import API_URL from "../../utils/apiConfig";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -79,7 +80,7 @@ const Register = () => {
       setIsLoading(true);
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/auth/register`,
+        `${API_URL}/api/auth/register`,
         {
           method: "POST",
           headers: {

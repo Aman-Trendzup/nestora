@@ -13,7 +13,7 @@ import {
   FiCheck,
 } from "react-icons/fi";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import API_BASE_URL from "../../utils/apiConfig";
 
 const formatPrice = (amount) =>
   `₹${Number(amount || 0).toLocaleString("en-IN")}`;

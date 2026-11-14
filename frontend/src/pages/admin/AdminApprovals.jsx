@@ -19,8 +19,7 @@ import {
   FiExternalLink,
 } from "react-icons/fi";
 import { getImageUrl } from "../../utils/imageHelper";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import API_URL from "../../utils/apiConfig";
 
 const AdminApprovals = () => {
   const [workspaces, setWorkspaces] = useState([]);

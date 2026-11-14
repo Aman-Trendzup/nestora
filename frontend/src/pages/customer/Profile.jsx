@@ -12,7 +12,7 @@ import {
   FiEdit2,
 } from "react-icons/fi";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import API_BASE_URL from "../../utils/apiConfig";
 
 export default function CustomerProfile() {
   const { user, refreshUser } = useAuth();

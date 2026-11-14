@@ -13,8 +13,7 @@ import {
   FiClock,
 } from "react-icons/fi";
 import heroImage from "../../assets/images/contact/contact.webp"
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import API_BASE_URL from "../../utils/apiConfig";
 
 const Contact = ({ isOwnerSupport = false }) => {
   const { user } = useAuth();

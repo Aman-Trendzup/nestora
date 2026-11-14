@@ -3,13 +3,12 @@ import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
 import ownerRegister from "../../assets/images/auth/owner register.webp";
+import API_URL from "../../utils/apiConfig";
 
 
 const OwnerRegister = () => {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
-
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverMessage, setServerMessage] = useState("");

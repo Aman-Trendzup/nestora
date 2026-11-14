@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate, useSearchParams, useLocation } from "react-router";
-import login from "../../assets/images/auth/login.webp"
+import login from "../../assets/images/auth/login.webp";
+import API_URL from "../../utils/apiConfig";
 
 const Login = () => {
   const { refreshUser } = useAuth();
@@ -61,7 +62,7 @@ const Login = () => {
       setServerError("");
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/auth/login`,
+        `${API_URL}/api/auth/login`,
         {
           method: "POST",
           headers: {
