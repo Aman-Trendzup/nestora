@@ -11,7 +11,6 @@ import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import { seedInitialCoupons } from "./controllers/couponController.js";
-import { autoSeedAdmin } from "./scripts/seedAdmin.js";
 import { UPLOAD_ROOT } from "./utils/imageStorage.js";
 
 dotenv.config();
@@ -106,7 +105,6 @@ if (process.env.NODE_ENV !== "production") {
     try {
       await connectDB();
       await seedInitialCoupons();
-      await autoSeedAdmin();
 
       app.listen(PORT, () => {
         console.log(`NESTORA server running on port ${PORT}`);
